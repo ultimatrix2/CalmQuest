@@ -4,48 +4,78 @@
 
 @layer base {
     :root {
-        --background: 0 0% 100%;
-        --foreground: 222.2 84% 4.9%;
+        /* Calming & Vibrant - Mental Wellness Theme */
+        --background: 180 25% 98%;
+        --foreground: 220 30% 15%;
         --card: 0 0% 100%;
-        --card-foreground: 222.2 84% 4.9%;
+        --card-foreground: 220 30% 15%;
         --popover: 0 0% 100%;
-        --popover-foreground: 222.2 84% 4.9%;
-        --primary: 221.2 83.2% 53.3%;
-        --primary-foreground: 210 40% 98%;
-        --secondary: 210 40% 96.1%;
-        --secondary-foreground: 222.2 47.4% 11.2%;
-        --muted: 210 40% 96.1%;
-        --muted-foreground: 215.4 16.3% 46.9%;
-        --accent: 210 40% 96.1%;
-        --accent-foreground: 222.2 47.4% 11.2%;
+        --popover-foreground: 220 30% 15%;
+
+        /* Teal/Cyan primary - calming yet vibrant */
+        --primary: 174 72% 46%;
+        --primary-foreground: 0 0% 100%;
+
+        /* Soft lavender secondary */
+        --secondary: 270 50% 95%;
+        --secondary-foreground: 270 40% 30%;
+
+        /* Warm coral accent */
+        --accent: 15 85% 65%;
+        --accent-foreground: 0 0% 100%;
+
+        --muted: 180 20% 94%;
+        --muted-foreground: 220 15% 45%;
         --destructive: 0 84.2% 60.2%;
         --destructive-foreground: 210 40% 98%;
-        --border: 214.3 31.8% 91.4%;
-        --input: 214.3 31.8% 91.4%;
-        --ring: 221.2 83.2% 53.3%;
-        --radius: 0.5rem;
+        --border: 180 20% 88%;
+        --input: 180 20% 88%;
+        --ring: 174 72% 46%;
+        --radius: 0.75rem;
+
+        /* Custom gradient colors */
+        --gradient-teal: #14b8a6;
+        --gradient-blue: #38bdf8;
+        --gradient-purple: #a78bfa;
+        --gradient-coral: #fb7185;
+        --gradient-orange: #fbbf24;
     }
 
     .dark {
-        --background: 222.2 84% 4.9%;
-        --foreground: 210 40% 98%;
-        --card: 222.2 84% 4.9%;
-        --card-foreground: 210 40% 98%;
-        --popover: 222.2 84% 4.9%;
-        --popover-foreground: 210 40% 98%;
-        --primary: 217.2 91.2% 59.8%;
-        --primary-foreground: 222.2 47.4% 11.2%;
-        --secondary: 217.2 32.6% 17.5%;
-        --secondary-foreground: 210 40% 98%;
-        --muted: 217.2 32.6% 17.5%;
-        --muted-foreground: 215 20.2% 65.1%;
-        --accent: 217.2 32.6% 17.5%;
-        --accent-foreground: 210 40% 98%;
-        --destructive: 0 62.8% 30.6%;
+        /* Dark mode - soothing deep tones */
+        --background: 220 30% 8%;
+        --foreground: 180 20% 95%;
+        --card: 220 25% 12%;
+        --card-foreground: 180 20% 95%;
+        --popover: 220 25% 12%;
+        --popover-foreground: 180 20% 95%;
+
+        /* Brighter teal for dark mode */
+        --primary: 174 80% 55%;
+        --primary-foreground: 220 30% 8%;
+
+        /* Muted purple secondary */
+        --secondary: 270 30% 20%;
+        --secondary-foreground: 270 50% 90%;
+
+        /* Vibrant coral accent */
+        --accent: 15 90% 60%;
+        --accent-foreground: 0 0% 100%;
+
+        --muted: 220 25% 16%;
+        --muted-foreground: 180 15% 65%;
+        --destructive: 0 62.8% 50%;
         --destructive-foreground: 210 40% 98%;
-        --border: 217.2 32.6% 17.5%;
-        --input: 217.2 32.6% 17.5%;
-        --ring: 224.3 76.3% 48%;
+        --border: 220 25% 18%;
+        --input: 220 25% 18%;
+        --ring: 174 80% 55%;
+
+        /* Custom gradient colors - brighter for dark mode */
+        --gradient-teal: #2dd4bf;
+        --gradient-blue: #60a5fa;
+        --gradient-purple: #c4b5fd;
+        --gradient-coral: #fb7185;
+        --gradient-orange: #fcd34d;
     }
 }
 
@@ -56,5 +86,23 @@
 
     body {
         @apply bg-background text-foreground;
+        font-feature-settings: "rlig" 1, "calt" 1;
+    }
+}
+
+/* Gradient utilities for mental wellness theme */
+@layer utilities {
+    .gradient-primary {
+        background: linear-gradient(to right, var(--gradient-teal), var(--gradient-blue), var(--gradient-purple));
+    }
+
+    .gradient-accent {
+        background: linear-gradient(to right, var(--gradient-coral), var(--gradient-orange), var(--gradient-teal));
+    }
+
+    .text-gradient {
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
     }
 }

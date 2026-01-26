@@ -1,18 +1,19 @@
-import { Navbar } from "@/components/landing/Navbar"
-import { Hero } from "@/components/landing/Hero"
-import { Features } from "@/components/landing/Features"
-import { Footer } from "@/components/landing/Footer"
+import { ThemeProvider } from "@/components/theme-provider"
+import { BrowserRouter, Routes, Route } from "react-router-dom"
+import HomePage from "@/pages/HomePage"
+import AuthPage from "@/pages/AuthPage"
 
 function App() {
     return (
-        <div className="min-h-screen bg-background">
-            <Navbar />
-            <main>
-                <Hero />
-                <Features />
-            </main>
-            <Footer />
-        </div>
+        <ThemeProvider defaultTheme="light" storageKey="calmquest-theme">
+            <BrowserRouter>
+                <Routes>
+                    <Route path="/" element={<HomePage />} />
+                    <Route path="/login" element={<AuthPage />} />
+                    <Route path="/signup" element={<AuthPage />} />
+                </Routes>
+            </BrowserRouter>
+        </ThemeProvider>
     )
 }
 
