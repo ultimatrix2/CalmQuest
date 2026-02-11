@@ -1,0 +1,9 @@
+{
+    "name": "calmquest-backend",
+    "version": "1.0.0",
+    "scripts": {
+        "start": "set \"JAVA_HOME=C:\\Program Files\\Eclipse Adoptium\\jdk-21.0.3.9-hotspot\" && .\\mvnw.cmd spring-boot:run",
+        "build": "set \"JAVA_HOME=C:\\Program Files\\Eclipse Adoptium\\jdk-21.0.3.9-hotspot\" && .\\mvnw.cmd clean package -DskipTests",
+        "test": "set \"JAVA_HOME=C:\\Program Files\\Eclipse Adoptium\\jdk-21.0.3.9-hotspot\" && .\\mvnw.cmd test"
+    }
+}

@@ -111,11 +111,7 @@ export default function AuthPage() {
                         </CardContent>
                     </Card>
 
-                    <FieldDescription className="px-6 pt-4 text-center">
-                        By continuing, you agree to our{" "}
-                        <a href="#" className="text-primary">Terms of Service</a> and{" "}
-                        <a href="#" className="text-primary">Privacy Policy</a>.
-                    </FieldDescription>
+
                 </div>
             </div>
         </div>

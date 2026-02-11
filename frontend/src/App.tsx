@@ -5,6 +5,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom"
 import HomePage from "@/pages/HomePage"
 import AuthPage from "@/pages/AuthPage"
 import DashboardPage from "@/pages/DashboardPage"
+import { OAuth2RedirectHandler } from "@/components/oauth2-redirect-handler"
 
 function App() {
     return (
@@ -16,6 +17,7 @@ function App() {
                         <Route path="/login" element={<AuthPage />} />
                         <Route path="/signup" element={<AuthPage />} />
                         <Route path="/dashboard" element={<DashboardPage />} />
+                        <Route path="/oauth2/redirect" element={<OAuth2RedirectHandler />} />
                     </Routes>
                 </BrowserRouter>
             </ThemeProvider>
