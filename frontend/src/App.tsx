@@ -6,19 +6,31 @@ import HomePage from "@/pages/HomePage"
 import AuthPage from "@/pages/AuthPage"
 import DashboardPage from "@/pages/DashboardPage"
 import { OAuth2RedirectHandler } from "@/components/oauth2-redirect-handler"
+import { Toaster } from "@/components/ui/sonner"
+import ProtectedRoute from "@/components/ProtectedRoute"
+import PublicRoute from "@/components/PublicRoute"
 
 function App() {
     return (
         <Provider store={store}>
-            <ThemeProvider defaultTheme="light" storageKey="calmquest-theme">
+            <ThemeProvider>
                 <BrowserRouter>
                     <Routes>
-                        <Route path="/" element={<HomePage />} />
-                        <Route path="/login" element={<AuthPage />} />
-                        <Route path="/signup" element={<AuthPage />} />
-                        <Route path="/dashboard" element={<DashboardPage />} />
                         <Route path="/oauth2/redirect" element={<OAuth2RedirectHandler />} />
+
+                        {/* Public Routes - accessible only when NOT logged in */}
+                        <Route element={<PublicRoute />}>
+                            <Route path="/" element={<HomePage />} />
+                            <Route path="/login" element={<AuthPage />} />
+                            <Route path="/signup" element={<AuthPage />} />
+                        </Route>
+
+                        {/* Protected Routes - accessible only when logged in */}
+                        <Route element={<ProtectedRoute />}>
+                            <Route path="/dashboard" element={<DashboardPage />} />
+                        </Route>
                     </Routes>
+                    <Toaster position="top-right" richColors />
                 </BrowserRouter>
             </ThemeProvider>
         </Provider>
