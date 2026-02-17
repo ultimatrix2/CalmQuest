@@ -42,12 +42,11 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
             user = userOptional.get();
             // Update user details if needed
         } else {
-            user = User.builder()
-                    .email(email)
-                    .fullName(name != null ? name : "User")
-                    .role(User.Role.USER)
-                    .password(passwordEncoder.encode(java.util.UUID.randomUUID().toString())) // Set random encoded password
-                    .build();
+            user = new User();
+            user.setEmail(email);
+            user.setFullName(name != null ? name : "User");
+            user.setRole(User.Role.USER);
+            user.setPassword(passwordEncoder.encode(java.util.UUID.randomUUID().toString()));
             userRepository.save(user);
         }
 

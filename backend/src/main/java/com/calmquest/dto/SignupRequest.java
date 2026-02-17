@@ -24,4 +24,20 @@ public class SignupRequest {
     @NotBlank(message = "Password is required")
     @Size(min = 8, max = 40, message = "Password must be between 8 and 40 characters")
     private String password;
+
+    @NotBlank(message = "Role is required")
+    private String role;
+
+    @NotBlank(message = "College Name is required")
+    private String collegeName;
+
+    // Role specific optional fields
+    private String registrationNumber; // Student
+    private String course; // Student
+    private String studentYear; // Student
+
+    private String specialization; // Doctor
+    private String licenseNumber; // Doctor
+
+    private String collegeIdNumber; // College Admin
 }

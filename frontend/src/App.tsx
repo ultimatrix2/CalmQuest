@@ -4,11 +4,14 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { BrowserRouter, Routes, Route } from "react-router-dom"
 import HomePage from "@/pages/HomePage"
 import AuthPage from "@/pages/AuthPage"
-import DashboardPage from "@/pages/DashboardPage"
+
 import { OAuth2RedirectHandler } from "@/components/oauth2-redirect-handler"
 import { Toaster } from "@/components/ui/sonner"
 import ProtectedRoute from "@/components/ProtectedRoute"
 import PublicRoute from "@/components/PublicRoute"
+import ProfilePage from "@/pages/dashboard/ProfilePage"
+import DashboardLayout from "@/components/DashboardLayout"
+import OverviewPage from "@/pages/dashboard/OverviewPage"
 
 function App() {
     return (
@@ -27,7 +30,10 @@ function App() {
 
                         {/* Protected Routes - accessible only when logged in */}
                         <Route element={<ProtectedRoute />}>
-                            <Route path="/dashboard" element={<DashboardPage />} />
+                            <Route path="/dashboard" element={<DashboardLayout />}>
+                                <Route index element={<OverviewPage />} />
+                                <Route path="profile" element={<ProfilePage />} />
+                            </Route>
                         </Route>
                     </Routes>
                     <Toaster position="top-right" richColors />

@@ -1,4 +1,6 @@
 import { ChevronRight, type LucideIcon } from "lucide-react"
+import { useNavigate } from "react-router-dom"
+import { toast } from "sonner"
 
 import {
     Collapsible,
@@ -18,6 +20,7 @@ import {
 
 export function NavMain({
     items,
+    communityStatus,
 }: {
     items: {
         title: string
@@ -29,7 +32,19 @@ export function NavMain({
             url: string
         }[]
     }[]
+    communityStatus?: string
 }) {
+    const navigate = useNavigate()
+
+    const handleNavigation = (url: string, title: string) => {
+        if (communityStatus !== 'APPROVED') {
+            toast.error(`Please verify your profile to access ${title}`)
+            navigate('/dashboard/profile')
+            return
+        }
+        navigate(url)
+    }
+
     return (
         <SidebarGroup>
             <SidebarGroupLabel>Platform</SidebarGroupLabel>
@@ -53,10 +68,10 @@ export function NavMain({
                                 <SidebarMenuSub>
                                     {item.items?.map((subItem) => (
                                         <SidebarMenuSubItem key={subItem.title}>
-                                            <SidebarMenuSubButton asChild>
-                                                <a href={subItem.url}>
+                                            <SidebarMenuSubButton asChild className="cursor-pointer">
+                                                <div onClick={() => handleNavigation(subItem.url, item.title)}>
                                                     <span>{subItem.title}</span>
-                                                </a>
+                                                </div>
                                             </SidebarMenuSubButton>
                                         </SidebarMenuSubItem>
                                     ))}
@@ -69,3 +84,4 @@ export function NavMain({
         </SidebarGroup>
     )
 }
+

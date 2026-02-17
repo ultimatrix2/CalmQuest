@@ -1,4 +1,5 @@
 import { AppSidebar } from "@/components/app-sidebar"
+import { Notifications } from "@/components/Notifications"
 import {
     Breadcrumb,
     BreadcrumbItem,
@@ -14,13 +15,26 @@ import {
     SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { Button } from "@/components/ui/button"
+import { Edit } from "lucide-react"
+import { Outlet, useLocation } from "react-router-dom"
+import { useState, useEffect } from "react"
 
-interface DashboardLayoutProps {
-    children: React.ReactNode
-    breadcrumbs?: { title: string; href?: string }[]
-}
 
-export default function DashboardLayout({ children, breadcrumbs = [] }: DashboardLayoutProps) {
+
+export default function DashboardLayout() {
+    const [isEditMode, setIsEditMode] = useState(false)
+    const location = useLocation()
+
+    // Reset edit mode when route changes
+    useEffect(() => {
+        setIsEditMode(false)
+    }, [location.pathname])
+
+    const toggleEditMode = () => {
+        setIsEditMode(!isEditMode)
+    }
+
     return (
         <SidebarProvider>
             <AppSidebar />
@@ -34,32 +48,47 @@ export default function DashboardLayout({ children, breadcrumbs = [] }: Dashboar
                         />
                         <Breadcrumb>
                             <BreadcrumbList>
-                                <BreadcrumbItem className="hidden md:block">
-                                    <BreadcrumbLink href="/dashboard">
-                                        Dashboard
-                                    </BreadcrumbLink>
-                                </BreadcrumbItem>
-                                {breadcrumbs.map((crumb, index) => (
-                                    <div key={index} className="flex items-center gap-2">
-                                        <BreadcrumbSeparator className="hidden md:block" />
-                                        <BreadcrumbItem>
-                                            {crumb.href ? (
-                                                <BreadcrumbLink href={crumb.href}>{crumb.title}</BreadcrumbLink>
-                                            ) : (
-                                                <BreadcrumbPage>{crumb.title}</BreadcrumbPage>
-                                            )}
-                                        </BreadcrumbItem>
-                                    </div>
-                                ))}
+
+                                {location.pathname.split('/').filter(Boolean).map((segment, index, array) => {
+                                    const href = `/${array.slice(0, index + 1).join('/')}`;
+                                    const title = segment.charAt(0).toUpperCase() + segment.slice(1);
+                                    const isLast = index === array.length - 1;
+
+                                    return (
+                                        <div key={href} className="flex items-center gap-2">
+                                            <BreadcrumbSeparator className="hidden md:block" />
+                                            <BreadcrumbItem>
+                                                {isLast ? (
+                                                    <BreadcrumbPage>{title}</BreadcrumbPage>
+                                                ) : (
+                                                    <BreadcrumbLink href={href}>{title}</BreadcrumbLink>
+                                                )}
+                                            </BreadcrumbItem>
+                                        </div>
+                                    );
+                                })}
                             </BreadcrumbList>
                         </Breadcrumb>
                     </div>
-                    <div className="ml-auto px-4">
+                    <div className="flex items-center gap-2 ml-auto px-4">
+                        {/* Edit Profile Button - Only visible on Profile Page and NOT when viewing another user */}
+                        {location.pathname.includes('/profile') && !location.search.includes('userId') && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={toggleEditMode}
+                                className="hidden md:flex"
+                            >
+                                <Edit className="mr-2 h-4 w-4" />
+                                {isEditMode ? 'Cancel Edit' : 'Edit Profile'}
+                            </Button>
+                        )}
+                        <Notifications />
                         <ThemeToggle />
                     </div>
                 </header>
                 <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-                    {children}
+                    <Outlet context={{ isEditMode, setIsEditMode }} />
                 </div>
             </SidebarInset>
         </SidebarProvider>

@@ -17,8 +17,8 @@ import java.util.Set;
 @Table(name = "users", uniqueConstraints = {
     @UniqueConstraint(columnNames = "email")
 })
+@Inheritance(strategy = InheritanceType.JOINED)
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class User {
@@ -41,27 +41,20 @@ public class User {
     @Size(min = 8, max = 120)
     private String password;
 
-    @Column(length = 500)
+    @Column(columnDefinition = "TEXT")
     private String profilePicture;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20)
-    @Builder.Default
     private Role role = Role.USER;
 
-    @Column(name = "college_id")
-    private Long collegeId;
-
     @Column(name = "is_verified")
-    @Builder.Default
     private Boolean isVerified = false;
 
     @Column(name = "is_active")
-    @Builder.Default
     private Boolean isActive = true;
 
     @Column(name = "created_at")
-    @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
 
     @Column(name = "updated_at")
@@ -72,9 +65,30 @@ public class User {
         updatedAt = LocalDateTime.now();
     }
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "college_id")
+    private College college;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private CommunityStatus communityStatus = CommunityStatus.NONE;
+
+    // Removed specific fields: registrationNumber, course, studentYear, specialization, licenseNumber
+    // These are now in subclasses
+
     public enum Role {
-        USER,
+        STUDENT,
+        COLLEGE_ADMIN,
         DOCTOR,
+        SUPER_ADMIN,
+        USER,
         ADMIN
+    }
+
+    public enum CommunityStatus {
+        PENDING,
+        APPROVED,
+        REJECTED,
+        NONE
     }
 }

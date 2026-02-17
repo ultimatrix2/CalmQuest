@@ -4,6 +4,14 @@ export interface SignupData {
     fullName: string;
     email: string;
     password: string;
+    role: string;
+    collegeName: string;
+    registrationNumber?: string;
+    course?: string;
+    studentYear?: string;
+    specialization?: string;
+    licenseNumber?: string;
+    collegeIdNumber?: string;
 }
 
 export interface LoginData {

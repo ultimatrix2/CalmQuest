@@ -71,7 +71,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const sidebarUser = {
         name: user?.fullName || "User",
         email: user?.email || "",
-        avatar: user?.avatar || "",
+        profilePicture: user?.profilePicture || "",
     }
 
     return (
@@ -94,7 +94,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </SidebarMenu>
             </SidebarHeader>
             <SidebarContent>
-                <NavMain items={data.navMain} />
+                <NavMain items={data.navMain} communityStatus={user?.communityStatus} />
             </SidebarContent>
             <SidebarFooter>
                 <NavUser user={sidebarUser} />

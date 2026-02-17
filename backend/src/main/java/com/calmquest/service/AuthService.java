@@ -3,8 +3,8 @@ package com.calmquest.service;
 import com.calmquest.dto.AuthResponse;
 import com.calmquest.dto.LoginRequest;
 import com.calmquest.dto.SignupRequest;
-import com.calmquest.entity.User;
-import com.calmquest.repository.UserRepository;
+import com.calmquest.entity.*;
+import com.calmquest.repository.*;
 import com.calmquest.security.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -20,6 +20,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final StudentRepository studentRepository;
+    private final DoctorRepository doctorRepository;
+    private final CollegeAdminRepository collegeAdminRepository;
+    private final CollegeRepository collegeRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
@@ -30,12 +34,50 @@ public class AuthService {
             throw new RuntimeException("Email is already registered");
         }
 
-        User user = User.builder()
-                .fullName(request.getFullName())
-                .email(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .role(User.Role.USER)
-                .build();
+        // Handle College (Find or Create)
+        College college = collegeRepository.findByName(request.getCollegeName())
+                .orElseGet(() -> collegeRepository.save(new College(null, request.getCollegeName(), null, null)));
+
+        User user;
+        String roleStr = request.getRole().toUpperCase();
+        User.Role role;
+
+        try {
+            role = User.Role.valueOf(roleStr);
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Invalid role: " + roleStr);
+        }
+
+        switch (role) {
+            case STUDENT:
+                Student student = new Student();
+                student.setRegistrationNumber(request.getRegistrationNumber());
+                student.setCourse(request.getCourse());
+                student.setStudentYear(request.getStudentYear());
+                user = student;
+                break;
+            case DOCTOR:
+                Doctor doctor = new Doctor();
+                doctor.setSpecialization(request.getSpecialization());
+                doctor.setLicenseNumber(request.getLicenseNumber());
+                user = doctor;
+                break;
+            case COLLEGE_ADMIN:
+                CollegeAdmin admin = new CollegeAdmin();
+                admin.setCollegeIdNumber(request.getCollegeIdNumber());
+                user = admin;
+                break;
+            default:
+                 // Fallback to basic user if role is not specific (though we expect specific roles)
+                 user = new User();
+                 break;
+        }
+
+        user.setFullName(request.getFullName());
+        user.setEmail(request.getEmail());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setRole(role);
+        user.setCollege(college);
 
         user = userRepository.save(user);
         

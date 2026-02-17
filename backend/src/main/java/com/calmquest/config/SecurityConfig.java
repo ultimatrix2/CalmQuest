@@ -33,7 +33,7 @@ public class SecurityConfig {
 
     private final CustomUserDetailsService userDetailsService;
     private final JwtAuthFilter jwtAuthFilter;
-    private final com.calmquest.security.oauth2.OAuth2SuccessHandler oAuth2SuccessHandler;
+//    private final com.calmquest.security.oauth2.OAuth2SuccessHandler oAuth2SuccessHandler;
     private final PasswordEncoder passwordEncoder;
 
     @Bean
@@ -43,14 +43,14 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/oauth2/**", "/login/**").permitAll() // Modified
+                        .requestMatchers("/api/auth/**", "/login/**").permitAll() // Modified
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
                         .anyRequest().authenticated()
                 )
-                .oauth2Login(oauth2 -> oauth2 // Added OAuth2 Login configuration
-                        .successHandler(oAuth2SuccessHandler)
-                )
+//                .oauth2Login(oauth2 -> oauth2 // Added OAuth2 Login configuration
+//                        .successHandler(oAuth2SuccessHandler)
+//                )
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 

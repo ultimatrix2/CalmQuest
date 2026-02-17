@@ -5,7 +5,16 @@ interface User {
     fullName: string
     email: string
     role: string
-    avatar?: string
+    profilePicture?: string
+    collegeName?: string
+    collegeId?: number
+    specialization?: string
+    licenseNumber?: string
+    communityStatus?: string
+    registrationNumber?: string
+    course?: string
+    studentYear?: string
+    collegeIdNumber?: string
 }
 
 interface AuthState {
@@ -80,6 +89,9 @@ const authSlice = createSlice({
         updateUser: (state, action: PayloadAction<Partial<User>>) => {
             if (state.user) {
                 state.user = { ...state.user, ...action.payload }
+                if (typeof window !== 'undefined') {
+                    localStorage.setItem('user', JSON.stringify(state.user))
+                }
             }
         },
     },

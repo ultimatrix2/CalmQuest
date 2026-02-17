@@ -17,6 +17,9 @@ public class AuthResponse {
     private String fullName;
     private String email;
     private String role;
+    private String collegeName;
+    private String profilePicture;
+    private String communityStatus;
 
     public AuthResponse(String token, User user) {
         this.token = token;
@@ -25,5 +28,8 @@ public class AuthResponse {
         this.fullName = user.getFullName();
         this.email = user.getEmail();
         this.role = user.getRole().name();
+        this.collegeName = user.getCollege() != null ? user.getCollege().getName() : null;
+        this.profilePicture = user.getProfilePicture();
+        this.communityStatus = user.getCommunityStatus().name();
     }
 }
