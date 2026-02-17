@@ -1,7 +1,7 @@
 import { useOutletContext, useSearchParams } from "react-router-dom"
 import { useSelector, useDispatch } from "react-redux"
 import type { RootState } from "@/store/store"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
@@ -340,7 +340,7 @@ export default function ProfilePage() {
                             </span>
                             Personal Information
                         </CardTitle>
-                        <CardDescription className="text-muted-foreground dark:text-slate-400">Your identifiable details and contact info.</CardDescription>
+
                     </CardHeader>
                     <CardContent className="space-y-4 pt-4">
                         <div className="space-y-2">
@@ -395,7 +395,7 @@ export default function ProfilePage() {
                             </span>
                             Professional & Academic
                         </CardTitle>
-                        <CardDescription className="text-muted-foreground dark:text-slate-400">Affiliation, qualifications, and specifics.</CardDescription>
+
                     </CardHeader>
                     <CardContent className="space-y-4 pt-4">
                         <div className="space-y-2">
@@ -408,7 +408,6 @@ export default function ProfilePage() {
                                     disabled={true}
                                     className="pl-9 bg-muted/50 dark:bg-slate-800 border-transparent dark:border-slate-700 text-foreground dark:text-slate-100"
                                 />
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute left-3 top-3 text-muted-foreground"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><line x1="12" x2="12" y1="9" y2="13" /><line x1="12" x2="12.01" y1="17" y2="17" /></svg>
                             </div>
                         </div>
 

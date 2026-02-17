@@ -27,7 +27,7 @@ public class NotificationController {
         User user = userRepository.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new RuntimeException("User not found"));
         
-        List<Notification> notifications = notificationRepository.findByRecipientOrderByCreatedAtDesc(user);
+        List<Notification> notifications = notificationRepository.findTop10ByRecipientOrderByCreatedAtDesc(user);
         return ResponseEntity.ok(notifications);
     }
 

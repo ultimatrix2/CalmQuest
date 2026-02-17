@@ -21,7 +21,7 @@ interface Notification {
     type: 'VERIFICATION_REQUEST' | 'VERIFICATION_RESULT' | 'GENERAL'
     link?: string
     isRead: boolean
-    createdAt: string
+    createdAt: string | number[]
 }
 
 export function Notifications() {
@@ -31,6 +31,19 @@ export function Notifications() {
 
     const unreadCount = notifications.filter(n => !n.isRead).length
 
+    const parseDate = (dateInput: string | number[]): Date => {
+        if (!dateInput) return new Date(0); // Fallback to epoch if invalid
+
+        if (Array.isArray(dateInput)) {
+            const [year, month, day, hour = 0, minute = 0, second = 0] = dateInput;
+            return new Date(year, month - 1, day, hour, minute, second);
+        } else {
+            // Handle "YYYY-MM-DD HH:mm:ss" by replacing space with T if needed
+            const isoString = dateInput.includes('T') ? dateInput : dateInput.replace(' ', 'T');
+            return new Date(isoString);
+        }
+    }
+
     const fetchNotifications = async () => {
         if (!token) return
         try {
@@ -38,8 +51,14 @@ export function Notifications() {
                 headers: { 'Authorization': `Bearer ${token}` }
             })
             if (response.ok) {
-                const data = await response.json()
-                setNotifications(data)
+                const data: Notification[] = await response.json()
+                // Sort by createdAt descending (latest first)
+                const sortedData = data.sort((a, b) => {
+                    const dateA = parseDate(a.createdAt).getTime();
+                    const dateB = parseDate(b.createdAt).getTime();
+                    return dateB - dateA;
+                });
+                setNotifications(sortedData)
             }
         } catch (error) {
             console.error("Failed to fetch notifications", error)
@@ -74,6 +93,21 @@ export function Notifications() {
         if (notification.link) {
             navigate(notification.link)
         }
+    }
+
+    const formatNotificationTime = (dateInput: string | number[]) => {
+        const date = parseDate(dateInput);
+
+        // If invalid date, return string representation if possible, or empty
+        if (isNaN(date.getTime())) return typeof dateInput === 'string' ? dateInput : '';
+
+        // User requested ONLY date, no relative time.
+        return date.toLocaleDateString('en-IN', {
+            timeZone: 'Asia/Kolkata',
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric'
+        });
     }
 
     const markAllRead = async () => {
@@ -119,7 +153,7 @@ export function Notifications() {
                         >
                             <div className="flex justify-between w-full">
                                 <span className="text-xs text-muted-foreground">
-                                    {new Date(notification.createdAt).toLocaleDateString()}
+                                    {formatNotificationTime(notification.createdAt)}
                                 </span>
                                 {!notification.isRead && (
                                     <span className="h-2 w-2 rounded-full bg-blue-500" />

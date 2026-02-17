@@ -27,7 +27,7 @@ const data = {
     navMain: [
         {
             title: "Community",
-            url: "#",
+            url: "/dashboard/community",
             icon: SquareTerminal,
             isActive: true,
             items: [],

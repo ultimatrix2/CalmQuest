@@ -12,6 +12,7 @@ import PublicRoute from "@/components/PublicRoute"
 import ProfilePage from "@/pages/dashboard/ProfilePage"
 import DashboardLayout from "@/components/DashboardLayout"
 import OverviewPage from "@/pages/dashboard/OverviewPage"
+import { CommunityPage } from "@/pages/dashboard/CommunityPage"
 
 function App() {
     return (
@@ -33,6 +34,7 @@ function App() {
                             <Route path="/dashboard" element={<DashboardLayout />}>
                                 <Route index element={<OverviewPage />} />
                                 <Route path="profile" element={<ProfilePage />} />
+                                <Route path="community" element={<CommunityPage />} />
                             </Route>
                         </Route>
                     </Routes>
