@@ -10,6 +10,16 @@ import {
     SheetTrigger,
 } from "@/components/ui/sheet";
 import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
     Carousel,
     CarouselContent,
     CarouselItem,
@@ -56,6 +66,8 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onUpdate, onDelete, cu
         Autoplay({ delay: 3000, stopOnInteraction: true })
     );
 
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
     // Media Carousel
     // const [currentMediaIndex, setCurrentMediaIndex] = useState(0); // REMOVED
 
@@ -94,13 +106,14 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onUpdate, onDelete, cu
     };
 
     const handleDelete = async () => {
-        if (!confirm('Are you sure you want to delete this post?')) return;
         try {
             await communityService.deletePost(post.id);
             onDelete(post.id);
             toast.success('Post deleted');
         } catch (error) {
             toast.error('Failed to delete post');
+        } finally {
+            setIsDeleteDialogOpen(false);
         }
     };
 
@@ -300,7 +313,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onUpdate, onDelete, cu
                             <Flag className="mr-2 h-4 w-4" /> Report
                         </DropdownMenuItem>
                         {canDelete && (
-                            <DropdownMenuItem onClick={handleDelete} className="text-red-600 focus:text-red-600">
+                            <DropdownMenuItem onClick={() => setIsDeleteDialogOpen(true)} className="text-red-600 focus:text-red-600">
                                 <Trash2 className="mr-2 h-4 w-4" /> Delete
                             </DropdownMenuItem>
                         )}
@@ -511,6 +524,24 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onUpdate, onDelete, cu
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+            {/* Delete Confirmation Dialog */}
+            <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <AlertDialogContent className="sm:max-w-[425px]">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete your post
+                            and remove it from the community servers.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700 text-white border-transparent">
+                            Delete Post
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </Card>
     );
 };

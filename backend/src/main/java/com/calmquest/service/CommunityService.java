@@ -31,20 +31,32 @@ public class CommunityService {
 
     // ─── Feed ───────────────────────────────────────────────
 
+    private void checkCommunityAccess(User user) {
+        if (user.getRole() == User.Role.SUPER_ADMIN) {
+            return;
+        }
+        if (user.getCommunityStatus() != User.CommunityStatus.APPROVED) {
+            String approver = user.getRole() == User.Role.COLLEGE_ADMIN ? "the Super Admin" : "your College Admin";
+            throw new RuntimeException("You must be verified by " + approver + " to access the community");
+        }
+    }
+
     public Page<CommunityPostDTO> getFeed(User currentUser, Pageable pageable, String sort, String search, String category) {
+        checkCommunityAccess(currentUser);
+        College college = currentUser.getCollege();
         Page<CommunityPost> posts;
 
         if (search != null && !search.isBlank()) {
-            posts = postRepository.searchByContent(search.trim(), pageable);
+            posts = postRepository.searchByCollegeAndContent(college, search.trim(), pageable);
         } else if (category != null && !category.isBlank() && !category.equals("All")) {
-            posts = postRepository.findByCategory(category, pageable);
+            posts = postRepository.findByCollegeAndCategory(college, category, pageable);
         } else {
             posts = switch (sort != null ? sort : "recent") {
-                case "oldest" -> postRepository.findAllByOrderByIsPinnedDescCreatedAtAsc(pageable);
-                case "most_liked" -> postRepository.findAllByOrderByIsPinnedDescLikesCountDesc(pageable);
-                case "least_liked" -> postRepository.findAllByOrderByIsPinnedDescLikesCountAsc(pageable);
-                case "most_commented" -> postRepository.findAllByOrderByIsPinnedDescCommentsCountDesc(pageable);
-                default -> postRepository.findAllByOrderByIsPinnedDescCreatedAtDesc(pageable);
+                case "oldest" -> postRepository.findByCollegeOrderByIsPinnedDescCreatedAtAsc(college, pageable);
+                case "most_liked" -> postRepository.findByCollegeOrderByIsPinnedDescLikesCountDesc(college, pageable);
+                case "least_liked" -> postRepository.findByCollegeOrderByIsPinnedDescLikesCountAsc(college, pageable);
+                case "most_commented" -> postRepository.findByCollegeOrderByIsPinnedDescCommentsCountDesc(college, pageable);
+                default -> postRepository.findByCollegeOrderByIsPinnedDescCreatedAtDesc(college, pageable);
             };
         }
 
@@ -54,8 +66,12 @@ public class CommunityService {
     // ─── Get Single Post ────────────────────────────────────
 
     public CommunityPostDTO getPost(Long postId, User currentUser) {
+        checkCommunityAccess(currentUser);
         CommunityPost post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
+        if (!post.getCollege().getId().equals(currentUser.getCollege().getId())) {
+             throw new RuntimeException("You cannot access posts from other colleges");
+        }
         return toDTO(post, currentUser);
     }
 
@@ -65,6 +81,7 @@ public class CommunityService {
     public CommunityPostDTO createPost(User author, String content, List<String> hashtags,
                                         Boolean isAnonymous, String category,
                                         List<MultipartFile> mediaFiles) {
+        checkCommunityAccess(author);
         CommunityPost post = CommunityPost.builder()
                 .content(content)
                 .author(author)
@@ -127,6 +144,7 @@ public class CommunityService {
 
     @Transactional
     public CommunityPostDTO editPost(Long postId, User user, String content, String category) {
+        checkCommunityAccess(user);
         CommunityPost post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
 
@@ -155,12 +173,12 @@ public class CommunityService {
 
     @Transactional
     public void deletePost(Long postId, User user) {
+        checkCommunityAccess(user);
         CommunityPost post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
 
         boolean isAuthor = post.getAuthor().getId().equals(user.getId());
-        boolean isAdmin = user.getRole() == User.Role.ADMIN
-                || user.getRole() == User.Role.SUPER_ADMIN
+        boolean isAdmin = user.getRole() == User.Role.SUPER_ADMIN
                 || user.getRole() == User.Role.COLLEGE_ADMIN;
 
         if (!isAuthor && !isAdmin) {
@@ -174,6 +192,7 @@ public class CommunityService {
 
     @Transactional
     public CommunityPostDTO toggleReaction(Long postId, User user, String emoji) {
+        checkCommunityAccess(user);
         CommunityPost post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
 
@@ -207,6 +226,7 @@ public class CommunityService {
 
     @Transactional
     public Map<String, Object> reportPost(Long postId, User reporter, String reason, String description) {
+        checkCommunityAccess(reporter);
         CommunityPost post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
 
@@ -232,6 +252,7 @@ public class CommunityService {
 
     @Transactional
     public CommunityPostDTO toggleBookmark(Long postId, User user) {
+        checkCommunityAccess(user);
         CommunityPost post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
 
@@ -248,6 +269,7 @@ public class CommunityService {
     }
 
     public Page<CommunityPostDTO> getUserBookmarks(User user, Pageable pageable) {
+        checkCommunityAccess(user);
         Page<PostBookmark> bookmarks = bookmarkRepository.findAllByUserOrderByCreatedAtDesc(user, pageable);
         return bookmarks.map(b -> toDTO(b.getPost(), user));
     }
@@ -256,6 +278,7 @@ public class CommunityService {
 
     @Transactional
     public Map<String, Object> addComment(Long postId, User author, String content, Boolean isAnonymous) {
+        checkCommunityAccess(author);
         CommunityPost post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
 
@@ -277,6 +300,7 @@ public class CommunityService {
 
     @Transactional
     public Map<String, Object> addReply(Long postId, Long parentCommentId, User author, String content, Boolean isAnonymous) {
+        checkCommunityAccess(author);
         CommunityPost post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
         PostComment parent = commentRepository.findById(parentCommentId)
@@ -299,21 +323,36 @@ public class CommunityService {
         return commentToMap(reply);
     }
 
-    public List<Map<String, Object>> getComments(Long postId) {
+    public List<Map<String, Object>> getComments(Long postId, User user) {
+        checkCommunityAccess(user);
+        CommunityPost post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("Post not found"));
+        if (!post.getCollege().getId().equals(user.getCollege().getId())) {
+             throw new RuntimeException("You cannot access comments from other colleges");
+        }
         List<PostComment> comments = commentRepository.findByPostIdOrderByCreatedAtDesc(postId);
         return comments.stream().map(this::commentToMap).collect(Collectors.toList());
     }
 
-    public List<Map<String, Object>> getThreadedComments(Long postId) {
+    public List<Map<String, Object>> getThreadedComments(Long postId, User user) {
+        checkCommunityAccess(user);
+        CommunityPost post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("Post not found"));
+        if (!post.getCollege().getId().equals(user.getCollege().getId())) {
+             throw new RuntimeException("You cannot access comments from other colleges");
+        }
         List<PostComment> topLevel = commentRepository.findByPostIdAndParentCommentIsNullOrderByCreatedAtDesc(postId);
         return topLevel.stream().map(this::commentToThreadedMap).collect(Collectors.toList());
     }
 
     // ─── User search (for @mentions) ────────────────────────
 
-    public List<Map<String, Object>> searchUsers(String query) {
+    public List<Map<String, Object>> searchUsers(String query, User searcher) {
+        checkCommunityAccess(searcher);
         List<User> users = userRepository.findByFullNameContainingIgnoreCase(query);
-        return users.stream().limit(10).map(u -> {
+        return users.stream()
+                .filter(u -> u.getCollege() != null && searcher.getCollege() != null && u.getCollege().getId().equals(searcher.getCollege().getId()))
+                .limit(10).map(u -> {
             Map<String, Object> map = new LinkedHashMap<>();
             map.put("id", u.getId());
             map.put("fullName", u.getFullName());
@@ -324,17 +363,19 @@ public class CommunityService {
 
     // ─── Stats ──────────────────────────────────────────────
 
-    public Map<String, Object> getStats() {
+    public Map<String, Object> getStats(User user) {
+        checkCommunityAccess(user);
         Map<String, Object> stats = new HashMap<>();
-        stats.put("totalPosts", postRepository.count());
-        stats.put("activeUsers", postRepository.findDistinctAuthorIds().size());
+        stats.put("totalPosts", postRepository.countByCollege(user.getCollege()));
+        stats.put("activeUsers", postRepository.findDistinctAuthorIdsByCollege(user.getCollege()).size());
         return stats;
     }
 
     // ─── Trending Tags ──────────────────────────────────────
 
-    public List<Map<String, Object>> getTrendingTags() {
-        List<Object[]> results = postRepository.findTrendingHashtags(java.time.LocalDateTime.now().minusDays(7), PageRequest.of(0, 10));
+    public List<Map<String, Object>> getTrendingTags(User user) {
+        checkCommunityAccess(user);
+        List<Object[]> results = postRepository.findTrendingHashtagsByCollege(user.getCollege(), java.time.LocalDateTime.now().minusDays(7), PageRequest.of(0, 10));
         return results.stream().map(row -> {
             Map<String, Object> tag = new HashMap<>();
             tag.put("tag", row[0]);
@@ -347,6 +388,7 @@ public class CommunityService {
 
     @Transactional
     public CommunityPostDTO togglePin(Long postId, User user) {
+        checkCommunityAccess(user);
         CommunityPost post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
 

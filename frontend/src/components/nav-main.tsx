@@ -20,7 +20,7 @@ import {
 
 export function NavMain({
     items,
-    communityStatus,
+    user,
 }: {
     items: {
         title: string
@@ -32,13 +32,18 @@ export function NavMain({
             url: string
         }[]
     }[]
-    communityStatus?: string
+    user?: { role: string; communityStatus: string } | null
 }) {
     const navigate = useNavigate()
 
     const handleNavigation = (url: string, title: string) => {
-        if (communityStatus !== 'APPROVED') {
-            toast.error(`Please verify your profile to access ${title}`)
+        // Only SUPER_ADMIN is intrinsically allowed, everyone else needs to be APPROVED.
+        const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+        const isApproved = user?.communityStatus === 'APPROVED';
+
+        if (!isSuperAdmin && !isApproved && url !== '/dashboard/profile') {
+            const approver = user?.role === 'COLLEGE_ADMIN' ? 'the Super Admin' : 'your College Admin';
+            toast.error(`Please wait for ${approver} to verify you before accessing ${title}`)
             navigate('/dashboard/profile')
             return
         }

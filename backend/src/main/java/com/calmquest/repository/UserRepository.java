@@ -19,4 +19,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findByCollegeAndCommunityStatus(com.calmquest.entity.College college, com.calmquest.entity.User.CommunityStatus communityStatus);
 
     List<User> findByFullNameContainingIgnoreCase(String fullName);
+
+    List<User> findByRoleAndCommunityStatus(com.calmquest.entity.User.Role role, com.calmquest.entity.User.CommunityStatus communityStatus);
+
+    List<User> findByRole(com.calmquest.entity.User.Role role);
 }

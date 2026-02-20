@@ -12,6 +12,16 @@ import { useState, useEffect, useRef } from "react"
 import { toast } from "sonner"
 import { updateUser } from "@/store/authSlice"
 import { Camera } from "lucide-react"
+import { adminService } from "@/services/adminService"
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 
 // Mock API call - replace with real API service later
 const updateProfileApi = async (formData: FormData, token: string) => {
@@ -44,8 +54,10 @@ export default function ProfilePage() {
     const dispatch = useDispatch()
     const [searchParams] = useSearchParams()
     const targetUserId = searchParams.get('userId')
-    const isAdminView = !!targetUserId && user?.role === 'COLLEGE_ADMIN'
+    const isAdminView = !!targetUserId && (user?.role === 'COLLEGE_ADMIN' || user?.role === 'SUPER_ADMIN')
     const [loading, setLoading] = useState(false)
+    const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
+    const [rejectionReason, setRejectionReason] = useState("");
     const fileInputRef = useRef<HTMLInputElement>(null)
 
     const [formData, setFormData] = useState({
@@ -198,45 +210,61 @@ export default function ProfilePage() {
         if (!token || !targetUserId) return;
         setLoading(true);
         try {
-            const response = await fetch(`http://localhost:8080/api/users/verification/${targetUserId}/approve`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (response.ok) {
+            if (user?.role === 'SUPER_ADMIN') {
+                await adminService.verifyAdmin(Number(targetUserId), true);
                 toast.success("User approved successfully");
-                // Refresh data
                 const data = await fetchProfileApi(token, targetUserId);
                 setFormData(prev => ({ ...prev, ...data }));
             } else {
-                toast.error("Failed to approve user");
+                const response = await fetch(`http://localhost:8080/api/users/verification/${targetUserId}/approve`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    toast.success("User approved successfully");
+                    // Refresh data
+                    const data = await fetchProfileApi(token, targetUserId);
+                    setFormData(prev => ({ ...prev, ...data }));
+                } else {
+                    toast.error("Failed to approve user");
+                }
             }
         } catch (error) { toast.error("An error occurred"); } finally { setLoading(false); }
     }
 
     const handleReject = async () => {
         if (!token || !targetUserId) return;
-        const reason = prompt("Enter rejection reason (optional):");
-        if (reason === null) return; // Cancelled
-
         setLoading(true);
+        setIsRejectDialogOpen(false);
+
         try {
-            const response = await fetch(`http://localhost:8080/api/users/verification/${targetUserId}/reject`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(reason)
-            });
-            if (response.ok) {
+            if (user?.role === 'SUPER_ADMIN') {
+                await adminService.verifyAdmin(Number(targetUserId), false, rejectionReason);
                 toast.success("User rejected");
-                // Refresh data
                 const data = await fetchProfileApi(token, targetUserId);
                 setFormData(prev => ({ ...prev, ...data }));
             } else {
-                toast.error("Failed to reject user");
+                const response = await fetch(`http://localhost:8080/api/users/verification/${targetUserId}/reject`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(rejectionReason)
+                });
+                if (response.ok) {
+                    toast.success("User rejected");
+                    // Refresh data
+                    const data = await fetchProfileApi(token, targetUserId);
+                    setFormData(prev => ({ ...prev, ...data }));
+                } else {
+                    toast.error("Failed to reject user");
+                }
             }
-        } catch (error) { toast.error("An error occurred"); } finally { setLoading(false); }
+        } catch (error) { toast.error("An error occurred"); } finally {
+            setLoading(false);
+            setRejectionReason("");
+        }
     }
 
     return (
@@ -320,7 +348,7 @@ export default function ProfilePage() {
                                     size="sm"
                                     variant="destructive"
                                     className="h-8"
-                                    onClick={handleReject}
+                                    onClick={() => setIsRejectDialogOpen(true)}
                                     disabled={loading}
                                 >
                                     Reject
@@ -330,6 +358,45 @@ export default function ProfilePage() {
                     </div>
                 </div>
             </div>
+
+            {/* Rejection Dialog */}
+            <Dialog
+                open={isRejectDialogOpen}
+                onOpenChange={(open) => {
+                    setIsRejectDialogOpen(open);
+                    if (!open) {
+                        setRejectionReason("");
+                    }
+                }}
+            >
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Confirm Rejection</DialogTitle>
+                        <DialogDescription>
+                            Provide a reason for rejecting <span className="font-semibold text-foreground">{formData.fullName}</span>. This will be sent as a notification.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <Label htmlFor="reason">Rejection Reason (Optional)</Label>
+                        <Textarea
+                            id="reason"
+                            value={rejectionReason}
+                            onChange={(e) => setRejectionReason(e.target.value)}
+                            placeholder="e.g. Please provide a valid registration number."
+                            className="mt-2"
+                        />
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsRejectDialogOpen(false)}>Cancel</Button>
+                        <Button
+                            variant="destructive"
+                            onClick={handleReject}
+                        >
+                            Confirm Rejection
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             <div className="grid gap-6 md:grid-cols-2">
                 <Card className="shadow-lg hover:shadow-2xl transition-all duration-300 bg-card dark:bg-[#0f172a] border border-border dark:border-slate-800 hover:border-primary/50 dark:hover:border-slate-600 hover:shadow-primary/10 dark:hover:shadow-blue-900/20 group">

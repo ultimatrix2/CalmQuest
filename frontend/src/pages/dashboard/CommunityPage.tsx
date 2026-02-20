@@ -32,7 +32,13 @@ export const CommunityPage: React.FC = () => {
     const [category, setCategory] = useState('All');
     const debouncedSearch = useDebounce(search, 500);
 
+    const isApproved = user?.communityStatus === 'APPROVED' || user?.role === 'SUPER_ADMIN' || user?.role === 'COLLEGE_ADMIN';
+
     const loadPosts = useCallback(async () => {
+        if (!isApproved) {
+            setLoading(false);
+            return;
+        }
         try {
             setLoading(true);
             const data = await communityService.getFeed(page, 10, sort, debouncedSearch, category === 'All' ? undefined : category);
@@ -43,7 +49,7 @@ export const CommunityPage: React.FC = () => {
         } finally {
             setLoading(false);
         }
-    }, [page, sort, debouncedSearch, category]);
+    }, [page, sort, debouncedSearch, category, isApproved]);
 
     // Initial load and when dependencies change
     useEffect(() => {
@@ -125,11 +131,19 @@ export const CommunityPage: React.FC = () => {
                     </div>
 
                     {/* Create Post Form */}
-                    <CreatePostForm onPostCreated={handlePostCreated} />
+                    {isApproved && <CreatePostForm onPostCreated={handlePostCreated} />}
 
                     {/* Posts List */}
                     <div className="space-y-6">
-                        {loading && posts.length === 0 ? (
+                        {!isApproved ? (
+                            <div className="text-center py-16 px-4 border border-dashed rounded-xl bg-muted/10">
+                                <h3 className="text-xl font-semibold mb-3">Verification Pending</h3>
+                                <p className="text-muted-foreground max-w-md mx-auto">
+                                    Your account is currently waiting for verification by your College Admin.
+                                    You will be able to view and post in the community once your account is approved.
+                                </p>
+                            </div>
+                        ) : loading && posts.length === 0 ? (
                             <div className="flex justify-center py-12">
                                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                             </div>

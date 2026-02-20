@@ -15,6 +15,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -27,6 +29,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
+    private final NotificationService notificationService;
 
     @Transactional
     public AuthResponse signup(SignupRequest request) {
@@ -67,6 +70,10 @@ public class AuthService {
                 admin.setCollegeIdNumber(request.getCollegeIdNumber());
                 user = admin;
                 break;
+            case SUPER_ADMIN:
+                user = new User();
+                user.setCommunityStatus(User.CommunityStatus.APPROVED);
+                break;
             default:
                  // Fallback to basic user if role is not specific (though we expect specific roles)
                  user = new User();
@@ -80,6 +87,31 @@ public class AuthService {
         user.setCollege(college);
 
         user = userRepository.save(user);
+
+        // Send notifications based on hierarchy
+        if (role == User.Role.STUDENT || role == User.Role.DOCTOR) {
+            // Students and Doctors notify their College Admin
+            List<User> collegeAdmins = userRepository.findByCollegeAndRole(college, User.Role.COLLEGE_ADMIN);
+            for (User admin : collegeAdmins) {
+                notificationService.createNotification(
+                        admin,
+                        "New verification request from " + user.getFullName() + " (" + role.name() + ")",
+                        Notification.NotificationType.VERIFICATION_REQUEST,
+                        "/dashboard/profile?userId=" + user.getId()
+                );
+            }
+        } else if (role == User.Role.COLLEGE_ADMIN) {
+            // College Admins notify Super Admins
+            List<User> superAdmins = userRepository.findByRole(User.Role.SUPER_ADMIN);
+            for (User superAdmin : superAdmins) {
+                notificationService.createNotification(
+                        superAdmin,
+                        "New verification request from College Admin: " + user.getFullName() + " (" + college.getName() + ")",
+                        Notification.NotificationType.VERIFICATION_REQUEST,
+                        "/dashboard/profile?userId=" + user.getId()
+                );
+            }
+        }
         
         String token = jwtTokenProvider.generateToken(user.getEmail());
         return new AuthResponse(token, user);

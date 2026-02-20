@@ -13,27 +13,27 @@ import java.util.List;
 @Repository
 public interface CommunityPostRepository extends JpaRepository<CommunityPost, Long> {
 
-    Page<CommunityPost> findAllByOrderByIsPinnedDescCreatedAtDesc(Pageable pageable);
+    Page<CommunityPost> findByCollegeOrderByIsPinnedDescCreatedAtDesc(com.calmquest.entity.College college, Pageable pageable);
 
-    Page<CommunityPost> findAllByOrderByIsPinnedDescCreatedAtAsc(Pageable pageable);
+    Page<CommunityPost> findByCollegeOrderByIsPinnedDescCreatedAtAsc(com.calmquest.entity.College college, Pageable pageable);
 
-    Page<CommunityPost> findAllByOrderByIsPinnedDescLikesCountDesc(Pageable pageable);
+    Page<CommunityPost> findByCollegeOrderByIsPinnedDescLikesCountDesc(com.calmquest.entity.College college, Pageable pageable);
 
-    Page<CommunityPost> findAllByOrderByIsPinnedDescLikesCountAsc(Pageable pageable);
+    Page<CommunityPost> findByCollegeOrderByIsPinnedDescLikesCountAsc(com.calmquest.entity.College college, Pageable pageable);
 
-    Page<CommunityPost> findAllByOrderByIsPinnedDescCommentsCountDesc(Pageable pageable);
+    Page<CommunityPost> findByCollegeOrderByIsPinnedDescCommentsCountDesc(com.calmquest.entity.College college, Pageable pageable);
 
-    @Query("SELECT p FROM CommunityPost p WHERE LOWER(p.content) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(p.category) LIKE LOWER(CONCAT('%', :q, '%')) OR EXISTS (SELECT h FROM p.hashtags h WHERE LOWER(h) LIKE LOWER(CONCAT('%', :q, '%'))) ORDER BY p.isPinned DESC, p.createdAt DESC")
-    Page<CommunityPost> searchByContent(@Param("q") String query, Pageable pageable);
+    @Query("SELECT p FROM CommunityPost p WHERE p.college = :college AND (LOWER(p.content) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(p.category) LIKE LOWER(CONCAT('%', :q, '%')) OR EXISTS (SELECT h FROM p.hashtags h WHERE LOWER(h) LIKE LOWER(CONCAT('%', :q, '%')))) ORDER BY p.isPinned DESC, p.createdAt DESC")
+    Page<CommunityPost> searchByCollegeAndContent(@Param("college") com.calmquest.entity.College college, @Param("q") String query, Pageable pageable);
 
-    Page<CommunityPost> findByCategory(String category, Pageable pageable);
+    Page<CommunityPost> findByCollegeAndCategory(com.calmquest.entity.College college, String category, Pageable pageable);
 
-    long count();
+    long countByCollege(com.calmquest.entity.College college);
 
-    @Query("SELECT DISTINCT p.author.id FROM CommunityPost p")
-    List<Long> findDistinctAuthorIds();
+    @Query("SELECT DISTINCT p.author.id FROM CommunityPost p WHERE p.college = :college")
+    List<Long> findDistinctAuthorIdsByCollege(@Param("college") com.calmquest.entity.College college);
 
-    @Query("SELECT h, COUNT(h) as cnt FROM CommunityPost p JOIN p.hashtags h WHERE p.createdAt >= :since GROUP BY h ORDER BY cnt DESC")
-    List<Object[]> findTrendingHashtags(@Param("since") java.time.LocalDateTime since, Pageable pageable);
+    @Query("SELECT h, COUNT(h) as cnt FROM CommunityPost p JOIN p.hashtags h WHERE p.college = :college AND p.createdAt >= :since GROUP BY h ORDER BY cnt DESC")
+    List<Object[]> findTrendingHashtagsByCollege(@Param("college") com.calmquest.entity.College college, @Param("since") java.time.LocalDateTime since, Pageable pageable);
 }
 
