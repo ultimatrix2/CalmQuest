@@ -13,6 +13,7 @@ import ProfilePage from "@/pages/dashboard/ProfilePage"
 import DashboardLayout from "@/components/DashboardLayout"
 import OverviewPage from "@/pages/dashboard/OverviewPage"
 import { CommunityPage } from "@/pages/dashboard/CommunityPage"
+import { AdminDashboard } from "@/pages/dashboard/AdminDashboard"
 
 function App() {
     return (
@@ -35,6 +36,7 @@ function App() {
                                 <Route index element={<OverviewPage />} />
                                 <Route path="profile" element={<ProfilePage />} />
                                 <Route path="community" element={<CommunityPage />} />
+                                <Route path="admin" element={<AdminDashboard />} />
                             </Route>
                         </Route>
                     </Routes>

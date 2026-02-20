@@ -186,8 +186,9 @@ public class CommunityController {
     }
 
     @GetMapping("/posts/{id}/comments")
-    public ResponseEntity<?> getComments(@PathVariable Long id) {
-        return ResponseEntity.ok(communityService.getThreadedComments(id));
+    public ResponseEntity<?> getComments(@PathVariable Long id, @AuthenticationPrincipal UserDetails userDetails) {
+        User user = getUser(userDetails);
+        return ResponseEntity.ok(communityService.getThreadedComments(id, user));
     }
 
     // ─── Pin / Unpin ────────────────────────────────────────
@@ -204,20 +205,23 @@ public class CommunityController {
     // ─── Stats & Tags ───────────────────────────────────────
 
     @GetMapping("/stats")
-    public ResponseEntity<?> getStats() {
-        return ResponseEntity.ok(communityService.getStats());
+    public ResponseEntity<?> getStats(@AuthenticationPrincipal UserDetails userDetails) {
+        User user = getUser(userDetails);
+        return ResponseEntity.ok(communityService.getStats(user));
     }
 
     @GetMapping("/tags/trending")
-    public ResponseEntity<?> getTrendingTags() {
-        return ResponseEntity.ok(communityService.getTrendingTags());
+    public ResponseEntity<?> getTrendingTags(@AuthenticationPrincipal UserDetails userDetails) {
+        User user = getUser(userDetails);
+        return ResponseEntity.ok(communityService.getTrendingTags(user));
     }
 
     // ─── User search (for @mentions) ────────────────────────
 
     @GetMapping("/users/search")
-    public ResponseEntity<?> searchUsers(@RequestParam String q) {
-        return ResponseEntity.ok(communityService.searchUsers(q));
+    public ResponseEntity<?> searchUsers(@RequestParam String q, @AuthenticationPrincipal UserDetails userDetails) {
+        User user = getUser(userDetails);
+        return ResponseEntity.ok(communityService.searchUsers(q, user));
     }
 
     // ─── Helper ─────────────────────────────────────────────

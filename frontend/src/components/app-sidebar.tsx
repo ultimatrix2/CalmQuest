@@ -6,6 +6,7 @@ import {
     Bot,
     SquareTerminal,
     Brain,
+    ShieldCheck,
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -74,6 +75,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         profilePicture: user?.profilePicture || "",
     }
 
+    const isAdmin = user?.role === 'SUPER_ADMIN' || user?.role === 'COLLEGE_ADMIN';
+    const dynamicNavMain = [...data.navMain];
+
+    if (isAdmin) {
+        dynamicNavMain.push({
+            title: "Admin Dashboard",
+            url: "/dashboard/admin",
+            icon: ShieldCheck,
+            items: [],
+            isActive: false,
+        });
+    }
+
     return (
         <Sidebar collapsible="icon" {...props}>
             <SidebarHeader>
@@ -94,7 +108,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </SidebarMenu>
             </SidebarHeader>
             <SidebarContent>
-                <NavMain items={data.navMain} communityStatus={user?.communityStatus} />
+                <NavMain items={dynamicNavMain} user={user ? { ...user, communityStatus: user.communityStatus || 'NONE' } : null} />
             </SidebarContent>
             <SidebarFooter>
                 <NavUser user={sidebarUser} />
