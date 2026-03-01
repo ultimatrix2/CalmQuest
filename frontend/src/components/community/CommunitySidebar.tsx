@@ -43,7 +43,7 @@ export const CommunitySidebar: React.FC<CommunitySidebarProps> = ({ onTagClick }
     return (
         <div className="space-y-6">
             {/* Stats Card */}
-            <Card>
+            <Card className="dark:bg-[#0f172a] dark:border-slate-800">
                 <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium flex items-center gap-2">
                         <Users className="h-4 w-4 text-primary" />
@@ -65,7 +65,7 @@ export const CommunitySidebar: React.FC<CommunitySidebarProps> = ({ onTagClick }
             </Card>
 
             {/* Trending Tags */}
-            <Card>
+            <Card className="dark:bg-[#0f172a] dark:border-slate-800">
                 <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium flex items-center gap-2">
                         <TrendingUp className="h-4 w-4 text-primary" />

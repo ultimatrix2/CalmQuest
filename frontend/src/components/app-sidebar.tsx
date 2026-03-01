@@ -55,11 +55,15 @@ const data = {
             items: [
                 {
                     title: "Chat",
-                    url: "#",
+                    url: "/dashboard/chat",
                 },
                 {
                     title: "Report",
-                    url: "#",
+                    url: "/dashboard/report",
+                },
+                {
+                    title: "History",
+                    url: "/dashboard/assessment-history",
                 },
             ],
         },
@@ -97,8 +101,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                             size="lg"
                             className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                         >
-                            <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                                <Brain className="size-4" />
+                            <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-gradient-to-br from-teal-500 to-blue-500 shadow-sm">
+                                <Brain className="size-5 text-white" />
                             </div>
                             <div className="grid flex-1 text-left text-sm leading-tight">
                                 <span className="truncate font-semibold">CalmQuest</span>
