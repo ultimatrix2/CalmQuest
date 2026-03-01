@@ -271,7 +271,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onUpdate, onDelete, cu
     const canDelete = isAuthor || isAdmin;
 
     return (
-        <Card className="w-full mb-6 overflow-hidden border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md transition-shadow">
+        <Card className="w-full mb-6 overflow-hidden border border-gray-100 dark:border-slate-800 dark:bg-[#0f172a] shadow-sm hover:shadow-md transition-shadow">
             <CardHeader className="p-4 pb-2 flex flex-row items-start justify-between space-y-0">
                 <div className="flex items-center gap-3">
                     <Avatar>

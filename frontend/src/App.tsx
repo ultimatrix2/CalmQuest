@@ -14,6 +14,9 @@ import DashboardLayout from "@/components/DashboardLayout"
 import OverviewPage from "@/pages/dashboard/OverviewPage"
 import { CommunityPage } from "@/pages/dashboard/CommunityPage"
 import { AdminDashboard } from "@/pages/dashboard/AdminDashboard"
+import ChatPage from "@/pages/dashboard/ChatPage"
+import ReportPage from "@/pages/dashboard/ReportPage"
+import AssessmentHistoryPage from "@/pages/dashboard/AssessmentHistoryPage"
 
 function App() {
     return (
@@ -37,6 +40,10 @@ function App() {
                                 <Route path="profile" element={<ProfilePage />} />
                                 <Route path="community" element={<CommunityPage />} />
                                 <Route path="admin" element={<AdminDashboard />} />
+                                <Route path="chat" element={<ChatPage />} />
+                                <Route path="report" element={<ReportPage />} />
+                                <Route path="report/:reportId" element={<ReportPage />} />
+                                <Route path="assessment-history" element={<AssessmentHistoryPage />} />
                             </Route>
                         </Route>
                     </Routes>
