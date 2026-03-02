@@ -1,7 +1,7 @@
 import { useOutletContext, useSearchParams } from "react-router-dom"
 import { useSelector, useDispatch } from "react-redux"
 import type { RootState } from "@/store/store"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
@@ -12,6 +12,16 @@ import { useState, useEffect, useRef } from "react"
 import { toast } from "sonner"
 import { updateUser } from "@/store/authSlice"
 import { Camera } from "lucide-react"
+import { adminService } from "@/services/adminService"
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 
 // Mock API call - replace with real API service later
 const updateProfileApi = async (formData: FormData, token: string) => {
@@ -44,8 +54,10 @@ export default function ProfilePage() {
     const dispatch = useDispatch()
     const [searchParams] = useSearchParams()
     const targetUserId = searchParams.get('userId')
-    const isAdminView = !!targetUserId && user?.role === 'COLLEGE_ADMIN'
+    const isAdminView = !!targetUserId && (user?.role === 'COLLEGE_ADMIN' || user?.role === 'SUPER_ADMIN')
     const [loading, setLoading] = useState(false)
+    const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
+    const [rejectionReason, setRejectionReason] = useState("");
     const fileInputRef = useRef<HTMLInputElement>(null)
 
     const [formData, setFormData] = useState({
@@ -198,45 +210,61 @@ export default function ProfilePage() {
         if (!token || !targetUserId) return;
         setLoading(true);
         try {
-            const response = await fetch(`http://localhost:8080/api/users/verification/${targetUserId}/approve`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (response.ok) {
+            if (user?.role === 'SUPER_ADMIN') {
+                await adminService.verifyAdmin(Number(targetUserId), true);
                 toast.success("User approved successfully");
-                // Refresh data
                 const data = await fetchProfileApi(token, targetUserId);
                 setFormData(prev => ({ ...prev, ...data }));
             } else {
-                toast.error("Failed to approve user");
+                const response = await fetch(`http://localhost:8080/api/users/verification/${targetUserId}/approve`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    toast.success("User approved successfully");
+                    // Refresh data
+                    const data = await fetchProfileApi(token, targetUserId);
+                    setFormData(prev => ({ ...prev, ...data }));
+                } else {
+                    toast.error("Failed to approve user");
+                }
             }
         } catch (error) { toast.error("An error occurred"); } finally { setLoading(false); }
     }
 
     const handleReject = async () => {
         if (!token || !targetUserId) return;
-        const reason = prompt("Enter rejection reason (optional):");
-        if (reason === null) return; // Cancelled
-
         setLoading(true);
+        setIsRejectDialogOpen(false);
+
         try {
-            const response = await fetch(`http://localhost:8080/api/users/verification/${targetUserId}/reject`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(reason)
-            });
-            if (response.ok) {
+            if (user?.role === 'SUPER_ADMIN') {
+                await adminService.verifyAdmin(Number(targetUserId), false, rejectionReason);
                 toast.success("User rejected");
-                // Refresh data
                 const data = await fetchProfileApi(token, targetUserId);
                 setFormData(prev => ({ ...prev, ...data }));
             } else {
-                toast.error("Failed to reject user");
+                const response = await fetch(`http://localhost:8080/api/users/verification/${targetUserId}/reject`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(rejectionReason)
+                });
+                if (response.ok) {
+                    toast.success("User rejected");
+                    // Refresh data
+                    const data = await fetchProfileApi(token, targetUserId);
+                    setFormData(prev => ({ ...prev, ...data }));
+                } else {
+                    toast.error("Failed to reject user");
+                }
             }
-        } catch (error) { toast.error("An error occurred"); } finally { setLoading(false); }
+        } catch (error) { toast.error("An error occurred"); } finally {
+            setLoading(false);
+            setRejectionReason("");
+        }
     }
 
     return (
@@ -320,7 +348,7 @@ export default function ProfilePage() {
                                     size="sm"
                                     variant="destructive"
                                     className="h-8"
-                                    onClick={handleReject}
+                                    onClick={() => setIsRejectDialogOpen(true)}
                                     disabled={loading}
                                 >
                                     Reject
@@ -331,6 +359,45 @@ export default function ProfilePage() {
                 </div>
             </div>
 
+            {/* Rejection Dialog */}
+            <Dialog
+                open={isRejectDialogOpen}
+                onOpenChange={(open) => {
+                    setIsRejectDialogOpen(open);
+                    if (!open) {
+                        setRejectionReason("");
+                    }
+                }}
+            >
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Confirm Rejection</DialogTitle>
+                        <DialogDescription>
+                            Provide a reason for rejecting <span className="font-semibold text-foreground">{formData.fullName}</span>. This will be sent as a notification.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <Label htmlFor="reason">Rejection Reason (Optional)</Label>
+                        <Textarea
+                            id="reason"
+                            value={rejectionReason}
+                            onChange={(e) => setRejectionReason(e.target.value)}
+                            placeholder="e.g. Please provide a valid registration number."
+                            className="mt-2"
+                        />
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsRejectDialogOpen(false)}>Cancel</Button>
+                        <Button
+                            variant="destructive"
+                            onClick={handleReject}
+                        >
+                            Confirm Rejection
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
             <div className="grid gap-6 md:grid-cols-2">
                 <Card className="shadow-lg hover:shadow-2xl transition-all duration-300 bg-card dark:bg-[#0f172a] border border-border dark:border-slate-800 hover:border-primary/50 dark:hover:border-slate-600 hover:shadow-primary/10 dark:hover:shadow-blue-900/20 group">
                     <CardHeader className="pb-2">
@@ -340,7 +407,7 @@ export default function ProfilePage() {
                             </span>
                             Personal Information
                         </CardTitle>
-                        <CardDescription className="text-muted-foreground dark:text-slate-400">Your identifiable details and contact info.</CardDescription>
+
                     </CardHeader>
                     <CardContent className="space-y-4 pt-4">
                         <div className="space-y-2">
@@ -395,7 +462,7 @@ export default function ProfilePage() {
                             </span>
                             Professional & Academic
                         </CardTitle>
-                        <CardDescription className="text-muted-foreground dark:text-slate-400">Affiliation, qualifications, and specifics.</CardDescription>
+
                     </CardHeader>
                     <CardContent className="space-y-4 pt-4">
                         <div className="space-y-2">
@@ -408,7 +475,6 @@ export default function ProfilePage() {
                                     disabled={true}
                                     className="pl-9 bg-muted/50 dark:bg-slate-800 border-transparent dark:border-slate-700 text-foreground dark:text-slate-100"
                                 />
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute left-3 top-3 text-muted-foreground"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><line x1="12" x2="12" y1="9" y2="13" /><line x1="12" x2="12.01" y1="17" y2="17" /></svg>
                             </div>
                         </div>
 

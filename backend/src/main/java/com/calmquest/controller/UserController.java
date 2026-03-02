@@ -76,14 +76,12 @@ public class UserController {
 
         // Access control: 
         // 1. User viewing themselves (already covered by /me but good to have)
-        // 2. College Admin viewing user from same college
+        // 2. Admins viewing any user profile
         if (!currentUser.getId().equals(userId)) {
+            boolean isSuperAdmin = currentUser.getRole() == User.Role.SUPER_ADMIN;
             boolean isCollegeAdmin = currentUser.getRole() == User.Role.COLLEGE_ADMIN;
-            boolean sameCollege = currentUser.getCollege() != null && 
-                                  targetUser.getCollege() != null && 
-                                  currentUser.getCollege().getId().equals(targetUser.getCollege().getId());
                                   
-            if (!isCollegeAdmin || !sameCollege) {
+            if (!isSuperAdmin && !isCollegeAdmin) {
                 return ResponseEntity.status(403).build();
             }
         }
@@ -103,16 +101,30 @@ public class UserController {
         user.setCommunityStatus(User.CommunityStatus.PENDING);
         userRepository.save(user);
 
-        // Notify College Admin(s)
-        List<User> admins = userRepository.findByCollegeAndRole(user.getCollege(), User.Role.COLLEGE_ADMIN);
-        for (User admin : admins) {
-            Notification notification = Notification.builder()
-                    .recipient(admin)
-                    .message("New verification request from " + user.getFullName())
-                    .type(Notification.NotificationType.VERIFICATION_REQUEST)
-                    .link("/dashboard/profile?userId=" + user.getId())
-                    .build();
-            notificationRepository.save(notification);
+        if (user.getRole() == User.Role.COLLEGE_ADMIN) {
+            // Notify all Super Admins
+            List<User> superAdmins = userRepository.findByRole(User.Role.SUPER_ADMIN);
+            for (User superAdmin : superAdmins) {
+                Notification notification = Notification.builder()
+                        .recipient(superAdmin)
+                        .message("New verification request from College Admin: " + user.getFullName() + " (" + user.getCollege().getName() + ")")
+                        .type(Notification.NotificationType.VERIFICATION_REQUEST)
+                        .link("/dashboard/profile?userId=" + user.getId())
+                        .build();
+                notificationRepository.save(notification);
+            }
+        } else {
+            // Notify College Admin(s) of the same college
+            List<User> admins = userRepository.findByCollegeAndRole(user.getCollege(), User.Role.COLLEGE_ADMIN);
+            for (User admin : admins) {
+                Notification notification = Notification.builder()
+                        .recipient(admin)
+                        .message("New verification request from " + user.getFullName())
+                        .type(Notification.NotificationType.VERIFICATION_REQUEST)
+                        .link("/dashboard/profile?userId=" + user.getId())
+                        .build();
+                notificationRepository.save(notification);
+            }
         }
 
         return ResponseEntity.ok("Verification requested successfully.");

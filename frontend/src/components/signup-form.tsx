@@ -19,6 +19,8 @@ import {
 import { useAppDispatch, useAppSelector } from "@/store/hooks"
 import { signupStart, signupSuccess, signupFailure } from "@/store/authSlice"
 import { authService, type SignupData } from "@/services/authService"
+import { toast } from "sonner"
+import { useEffect } from "react"
 
 interface SignupFormProps extends React.ComponentProps<"form"> {
     onSwitchToLogin?: () => void
@@ -41,6 +43,18 @@ export function SignupForm({
     const dispatch = useAppDispatch()
     const navigate = useNavigate()
     const { loading, error } = useAppSelector((state) => state.auth)
+
+    useEffect(() => {
+        if (error) {
+            toast.error(error)
+        }
+    }, [error])
+
+    useEffect(() => {
+        if (passwordError) {
+            toast.error(passwordError)
+        }
+    }, [passwordError])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -101,12 +115,6 @@ export function SignupForm({
                 <div className="flex flex-col items-center gap-2 text-center">
                     {/* Header handled by parent page */}
                 </div>
-
-                {(error || passwordError) && (
-                    <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md">
-                        {passwordError || error}
-                    </div>
-                )}
 
                 <Field>
                     <FieldLabel htmlFor="signup-name">Full Name</FieldLabel>

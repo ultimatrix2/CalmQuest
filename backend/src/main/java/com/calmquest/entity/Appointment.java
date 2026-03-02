@@ -41,6 +41,8 @@ public class Appointment {
     @Column(columnDefinition = "TEXT")
     private String reason;
 
+    private String meetingLink;
+
     @OneToOne(mappedBy = "appointment", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private DoctorReport report;
 

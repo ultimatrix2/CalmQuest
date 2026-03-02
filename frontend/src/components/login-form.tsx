@@ -13,6 +13,8 @@ import { Brain } from "lucide-react"
 import { useAppDispatch, useAppSelector } from "@/store/hooks"
 import { loginStart, loginSuccess, loginFailure } from "@/store/authSlice"
 import { authService } from "@/services/authService"
+import { toast } from "sonner"
+import { useEffect } from "react"
 
 interface LoginFormProps extends React.ComponentProps<"div"> {
     onSwitchToSignup?: () => void
@@ -29,6 +31,12 @@ export function LoginForm({
     const dispatch = useAppDispatch()
     const navigate = useNavigate()
     const { loading, error } = useAppSelector((state) => state.auth)
+
+    useEffect(() => {
+        if (error) {
+            toast.error(error)
+        }
+    }, [error])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -64,12 +72,6 @@ export function LoginForm({
                             Login to your CalmQuest account
                         </p>
                     </div>
-
-                    {error && (
-                        <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md">
-                            {error}
-                        </div>
-                    )}
 
                     <Field>
                         <FieldLabel htmlFor="email">Email</FieldLabel>
