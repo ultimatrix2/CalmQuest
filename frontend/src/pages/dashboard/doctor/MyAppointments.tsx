@@ -57,9 +57,7 @@ export default function MyAppointments() {
         <div className="container max-w-4xl py-6 space-y-8">
             <div>
                 <h1 className="text-3xl font-bold tracking-tight">My Appointments</h1>
-                <p className="text-muted-foreground mt-2">
-                    Manage and view your requested and scheduled appointments.
-                </p>
+
             </div>
 
             <div className="grid md:grid-cols-2 gap-4">

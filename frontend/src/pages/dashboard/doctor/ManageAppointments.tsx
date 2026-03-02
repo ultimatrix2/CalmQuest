@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,6 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { format } from 'date-fns';
 
 export default function DoctorAppointments() {
+    const location = useLocation();
     const [appointments, setAppointments] = useState<Appointment[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -163,41 +165,52 @@ export default function DoctorAppointments() {
     return (
         <div className="container max-w-5xl py-6 space-y-8">
             <div>
-                <h1 className="text-3xl font-bold tracking-tight">Appointment Management</h1>
+                <h1 className="text-3xl font-bold tracking-tight">
+                    {location.pathname.includes('requests') && "Pending Requests"}
+                    {location.pathname.includes('meetings') && "Scheduled Meetings"}
+                    {location.pathname.includes('history') && "Appointment History"}
+                </h1>
                 <p className="text-muted-foreground mt-2">
-                    Review incoming requests and manage your scheduled meetings with students.
+                    {location.pathname.includes('requests')}
+                    {location.pathname.includes('meetings')}
+                    {location.pathname.includes('history')}
                 </p>
             </div>
 
             <div className="space-y-6">
-                <div>
-                    <h2 className="text-xl font-semibold mb-4">Pending Requests ({pendingRequests.length})</h2>
-                    {pendingRequests.length === 0 ? (
-                        <p className="text-muted-foreground">No pending requests.</p>
-                    ) : (
-                        <div className="grid md:grid-cols-2 gap-4">
-                            {pendingRequests.map(renderAppointmentCard)}
-                        </div>
-                    )}
-                </div>
-
-                <div>
-                    <h2 className="text-xl font-semibold mb-4">Scheduled Meetings ({scheduledAppointments.length})</h2>
-                    {scheduledAppointments.length === 0 ? (
-                        <p className="text-muted-foreground">No upcoming scheduled meetings.</p>
-                    ) : (
-                        <div className="grid md:grid-cols-2 gap-4">
-                            {scheduledAppointments.map(renderAppointmentCard)}
-                        </div>
-                    )}
-                </div>
-
-                {pastAppointments.length > 0 && (
+                {location.pathname.includes('requests') && (
                     <div>
-                        <h2 className="text-xl font-semibold mb-4">Past Appointments</h2>
-                        <div className="grid md:grid-cols-2 gap-4 opacity-75">
-                            {pastAppointments.map(renderAppointmentCard)}
-                        </div>
+                        {pendingRequests.length === 0 ? (
+                            <p className="text-muted-foreground">No pending requests.</p>
+                        ) : (
+                            <div className="grid md:grid-cols-2 gap-4">
+                                {pendingRequests.map(renderAppointmentCard)}
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {location.pathname.includes('meetings') && (
+                    <div>
+                        {scheduledAppointments.length === 0 ? (
+                            <p className="text-muted-foreground">No upcoming scheduled meetings.</p>
+                        ) : (
+                            <div className="grid md:grid-cols-2 gap-4">
+                                {scheduledAppointments.map(renderAppointmentCard)}
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {location.pathname.includes('history') && (
+                    <div>
+                        {pastAppointments.length === 0 ? (
+                            <p className="text-muted-foreground">No past appointments found.</p>
+                        ) : (
+                            <div className="grid md:grid-cols-2 gap-4 opacity-75">
+                                {pastAppointments.map(renderAppointmentCard)}
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

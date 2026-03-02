@@ -64,9 +64,7 @@ export default function BookAppointment() {
         <div className="container max-w-4xl py-6 space-y-6">
             <div>
                 <h1 className="text-3xl font-bold tracking-tight">Book Appointment</h1>
-                <p className="text-muted-foreground mt-2">
-                    Request a mental health assessment appointment with your college specialist.
-                </p>
+
             </div>
 
             <div className="grid md:grid-cols-2 gap-6">
@@ -104,7 +102,7 @@ export default function BookAppointment() {
                 </div>
 
                 <div className="space-y-4">
-                    <h2 className="text-xl font-semibold">Appointment Details</h2>
+                    <br></br>
                     <Card>
                         <CardContent className="p-4 space-y-4">
                             <div className="space-y-2">
@@ -129,7 +127,7 @@ export default function BookAppointment() {
                         </CardFooter>
                     </Card>
                 </div>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }
