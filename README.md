@@ -230,8 +230,6 @@ Create a `.env` file inside the **`backend/`** directory with the following vari
 | `MAIL_PASSWORD` | SMTP app password | _(app-specific password)_ |
 | `GEMINI_API_KEY` | Google Gemini API key | _(your API key)_ |
 
-> **Note:** Cloudinary credentials are configured in `application.properties`. Update them if you want to use your own Cloudinary account.
-
 ---
 
 ## 📸 Screenshots
@@ -243,15 +241,6 @@ Create a `.env` file inside the **`backend/`** directory with the following vari
 <!-- ![Community](docs/screenshots/community.png) -->
 
 ---
-
-## 👥 Contributors
-
-<a href="https://github.com/ultimatrix2/CalmQuest/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=ultimatrix2/CalmQuest" />
-</a>
-
----
-
 
 
 </div>
