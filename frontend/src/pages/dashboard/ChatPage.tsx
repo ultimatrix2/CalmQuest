@@ -45,6 +45,11 @@ const AssessmentCard: React.FC<{
 }> = ({ question, onAnswer, isSubmitting }) => {
     const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
 
+    // Reset selected answer when the question changes
+    useEffect(() => {
+        setSelectedAnswer(null);
+    }, [question.questionIndex, question.testType]);
+
     return (
         <div className="flex justify-start">
             <div className="max-w-[85%] space-y-3">

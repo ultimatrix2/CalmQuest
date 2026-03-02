@@ -132,7 +132,36 @@ public class ChatController {
     public ResponseEntity<?> getReports(@AuthenticationPrincipal UserDetails userDetails) {
         User user = getUser(userDetails);
         List<AIReport> reports = aiReportRepository.findByStudentOrderByCreatedAtDesc(user);
-        List<Map<String, Object>> result = reports.stream().map(r -> {
+        return ResponseEntity.ok(formatReports(reports));
+    }
+
+    @GetMapping("/reports/student/{studentId}")
+    public ResponseEntity<?> getStudentReports(
+            @PathVariable Long studentId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        User doctorOrAdmin = getUser(userDetails);
+        
+        // Ensure user is authorized
+        if (doctorOrAdmin.getRole() != User.Role.DOCTOR && doctorOrAdmin.getRole() != User.Role.COLLEGE_ADMIN && doctorOrAdmin.getRole() != User.Role.SUPER_ADMIN) {
+            return ResponseEntity.status(403).body(Map.of("error", "Not authorized to view student reports"));
+        }
+
+        User student = userRepository.findById(studentId)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
+
+        if (doctorOrAdmin.getRole() != User.Role.SUPER_ADMIN) {
+            if (doctorOrAdmin.getCollege() == null || student.getCollege() == null || 
+                !doctorOrAdmin.getCollege().getId().equals(student.getCollege().getId())) {
+                return ResponseEntity.status(403).body(Map.of("error", "Not authorized to view reports for students outside your college"));
+            }
+        }
+
+        List<AIReport> reports = aiReportRepository.findByStudentOrderByCreatedAtDesc(student);
+        return ResponseEntity.ok(formatReports(reports));
+    }
+
+    private List<Map<String, Object>> formatReports(List<AIReport> reports) {
+        return reports.stream().map(r -> {
             Map<String, Object> map = new HashMap<>();
             map.put("id", r.getId());
             map.put("ghq12Score", r.getGhq12Score());
@@ -166,10 +195,8 @@ public class ChatController {
             } else {
                 map.put("emotionBreakdown", new HashMap<>());
             }
-            
             return map;
         }).collect(Collectors.toList());
-        return ResponseEntity.ok(result);
     }
 
     // ─── Helper ─────────────────────────────────────────────

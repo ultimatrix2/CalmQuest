@@ -22,33 +22,45 @@ import {
     SidebarRail,
 } from "@/components/ui/sidebar"
 
-// This is sample data.
-const data = {
-    // User data is now fetched from Redux, removing hardcoded user
-    navMain: [
-        {
+// User data is now fetched from Redux, removing hardcoded user
+// and dynamicNavMain is built dynamically based on role.
+
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+    const { user } = useSelector((state: RootState) => state.auth)
+
+    const sidebarUser = {
+        name: user?.fullName || "User",
+        email: user?.email || "",
+        profilePicture: user?.profilePicture || "",
+    }
+
+    const isDoctor = user?.role === 'DOCTOR';
+    const isStudent = user?.role === 'STUDENT';
+    const isAdmin = user?.role === 'SUPER_ADMIN' || user?.role === 'COLLEGE_ADMIN';
+    const dynamicNavMain = [];
+
+    // All verified users get Community
+    if (user?.role && user.role !== 'SUPER_ADMIN' && user.role !== 'COLLEGE_ADMIN') {
+        dynamicNavMain.push({
             title: "Community",
             url: "/dashboard/community",
             icon: SquareTerminal,
             isActive: true,
             items: [],
-        },
-        {
-            title: "Doctor",
-            url: "#",
-            icon: Bot,
-            items: [
-                {
-                    title: "Appointment",
-                    url: "#",
-                },
-                {
-                    title: "History",
-                    url: "#",
-                },
-            ],
-        },
-        {
+        });
+    } else if (isAdmin) {
+        dynamicNavMain.push({
+            title: "Community",
+            url: "/dashboard/community",
+            icon: SquareTerminal,
+            isActive: true,
+            items: [],
+        });
+    }
+
+    // Students get AI Diagnosis
+    if (isStudent || isAdmin) {
+        dynamicNavMain.push({
             title: "AI Diagnosis",
             url: "#",
             icon: BookOpen,
@@ -66,21 +78,47 @@ const data = {
                     url: "/dashboard/assessment-history",
                 },
             ],
-        },
-    ],
-}
-
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-    const { user } = useSelector((state: RootState) => state.auth)
-
-    const sidebarUser = {
-        name: user?.fullName || "User",
-        email: user?.email || "",
-        profilePicture: user?.profilePicture || "",
+        });
     }
 
-    const isAdmin = user?.role === 'SUPER_ADMIN' || user?.role === 'COLLEGE_ADMIN';
-    const dynamicNavMain = [...data.navMain];
+    // Doctor related menus
+    if (isDoctor) {
+        dynamicNavMain.push({
+            title: "Doctor Dashboard",
+            url: "#",
+            icon: Bot,
+            items: [
+                {
+                    title: "Appointment Requests",
+                    url: "/dashboard/doctor/requests",
+                },
+                {
+                    title: "Scheduled Meetings",
+                    url: "/dashboard/doctor/meetings",
+                },
+                {
+                    title: "History",
+                    url: "/dashboard/doctor/history",
+                }
+            ],
+        });
+    } else if (isStudent) {
+        dynamicNavMain.push({
+            title: "College Doctor",
+            url: "#",
+            icon: Bot,
+            items: [
+                {
+                    title: "Book Appointment",
+                    url: "/dashboard/doctor/book",
+                },
+                {
+                    title: "My Appointments",
+                    url: "/dashboard/doctor/my-appointments",
+                }
+            ],
+        });
+    }
 
     if (isAdmin) {
         dynamicNavMain.push({

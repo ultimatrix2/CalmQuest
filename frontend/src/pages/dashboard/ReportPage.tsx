@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { chatService, type AIReport } from '@/services/chatService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -79,6 +79,9 @@ const ScoreGauge: React.FC<{ label: string; score?: number; maxScore: number; te
 const ReportPage: React.FC = () => {
     const { reportId } = useParams<{ reportId?: string }>();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const studentIdParam = searchParams.get('studentId');
+
     const [report] = useState<AIReport | null>(null);
     const [reports, setReports] = useState<AIReport[]>([]);
     const [loading, setLoading] = useState(true);
@@ -87,13 +90,20 @@ const ReportPage: React.FC = () => {
     useEffect(() => {
         const loadReports = async () => {
             try {
-                const data = await chatService.getReports();
-                setReports(data);
-                if (reportId) {
-                    const found = data.find(r => r.id === Number(reportId));
-                    setSelectedReport(found || data[0] || null);
-                } else if (data.length > 0) {
-                    setSelectedReport(data[0]);
+                let data;
+                if (studentIdParam) {
+                    data = await chatService.getStudentReports(Number(studentIdParam));
+                } else {
+                    data = await chatService.getReports();
+                }
+                setReports(data || []);
+                if (data && data.length > 0) {
+                    if (reportId) {
+                        const found = data.find((r: AIReport) => r.id === Number(reportId));
+                        setSelectedReport(found || data[0] || null);
+                    } else {
+                        setSelectedReport(data[0]);
+                    }
                 }
             } catch {
                 setReports([]);
@@ -102,7 +112,7 @@ const ReportPage: React.FC = () => {
             }
         };
         loadReports();
-    }, [reportId]);
+    }, [reportId, studentIdParam]);
 
     const displayReport = selectedReport || report;
 

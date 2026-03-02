@@ -151,4 +151,9 @@ export const chatService = {
         const response = await axios.get(`${API_URL}/reports`, getAuthHeader());
         return response.data;
     },
+
+    getStudentReports: async (studentId: number): Promise<AIReport[]> => {
+        const response = await axios.get(`${API_URL}/reports/student/${studentId}`, getAuthHeader());
+        return response.data;
+    },
 };
