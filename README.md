@@ -240,6 +240,9 @@ Create a `.env` file inside the **`backend/`** directory with the following vari
 ###  Profile
 ![Annotations](assets/images/profile.png)
 
+### ChatBot
+![Summarizer and QnA](assets/images/chatbot.png)
+
 ### Community
 ![Summarizer and QnA](assets/images/community.png)
 
