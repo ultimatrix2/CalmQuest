@@ -30,7 +30,7 @@ public class PostReport {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id", nullable = false)
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "comments", "likes", "reactions"})
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "comments", "likes", "reactions", "reports", "bookmarks", "mediaItems"})
     private CommunityPost post;
 
     @Enumerated(EnumType.STRING)

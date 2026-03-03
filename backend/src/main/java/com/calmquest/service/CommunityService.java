@@ -242,6 +242,14 @@ public class CommunityService {
                 .build();
         reportRepository.save(report);
 
+        // Notify all college admins in the reporter's college
+        List<User> collegeAdmins = userRepository.findByCollegeAndRole(reporter.getCollege(), User.Role.COLLEGE_ADMIN);
+        
+        for (User admin : collegeAdmins) {
+            String msg = "A post has been reported for: " + reason.replace("_", " ");
+            notificationService.createNotification(admin, msg, Notification.NotificationType.SYSTEM, "/dashboard/admin");
+        }
+
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("success", true);
         result.put("message", "Report submitted. The community admin has been notified.");

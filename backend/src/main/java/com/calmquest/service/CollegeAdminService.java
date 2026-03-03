@@ -3,10 +3,12 @@ package com.calmquest.service;
 import com.calmquest.entity.College;
 import com.calmquest.entity.User;
 import com.calmquest.entity.Notification;
+import com.calmquest.entity.PostReport;
+import com.calmquest.repository.PostReportRepository;
 import com.calmquest.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 
@@ -16,6 +18,8 @@ public class CollegeAdminService {
 
     private final UserRepository userRepository;
     private final NotificationService notificationService;
+    private final PostReportRepository postReportRepository;
+    private final CommunityService communityService;
 
     public List<User> getPendingUsers(User admin) {
         if (admin.getCommunityStatus() != User.CommunityStatus.APPROVED) {
@@ -61,5 +65,34 @@ public class CollegeAdminService {
         );
 
         return savedUser;
+    }
+
+    public List<PostReport> getReportedPosts(User admin) {
+        if (admin.getCommunityStatus() != User.CommunityStatus.APPROVED) {
+            throw new RuntimeException("You must be verified by the Super Admin to view reported posts");
+        }
+        return postReportRepository.findByPostCollegeAndStatusOrderByCreatedAtDesc(admin.getCollege(), PostReport.ReportStatus.PENDING);
+    }
+
+    @Transactional
+    public PostReport dismissReport(Long reportId, User admin) {
+        if (admin.getCommunityStatus() != User.CommunityStatus.APPROVED) {
+            throw new RuntimeException("You must be verified by the Super Admin to dismiss reports");
+        }
+
+        PostReport report = postReportRepository.findById(reportId)
+                .orElseThrow(() -> new RuntimeException("Report not found"));
+
+        if (!report.getPost().getCollege().getId().equals(admin.getCollege().getId())) {
+            throw new RuntimeException("You do not have permission to dismiss reports from other colleges");
+        }
+
+        report.setStatus(PostReport.ReportStatus.DISMISSED);
+        return postReportRepository.save(report);
+    }
+
+    @Transactional
+    public void deleteReportedPost(Long postId, User admin) {
+        communityService.deletePost(postId, admin);
     }
 }
