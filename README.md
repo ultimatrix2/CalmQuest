@@ -232,13 +232,22 @@ Create a `.env` file inside the **`backend/`** directory with the following vari
 
 ---
 
-## 📸 Screenshots
+##  Screenshots
 
-> _Screenshots coming soon — contributions welcome!_
+###  Dashboard
+![Navigation](assets/images/dashboard.png)
 
-<!-- Add screenshots here -->
-<!-- ![Dashboard](docs/screenshots/dashboard.png) -->
-<!-- ![Community](docs/screenshots/community.png) -->
+###  Profile
+![Annotations](assets/images/profile.png)
+
+### Community
+![Summarizer and QnA](assets/images/community.png)
+
+###  Report
+![TTS](assets/images/report.png)
+
+###  History
+![Dictionary](assets/images/history.png)
 
 ---
 
