@@ -136,7 +136,7 @@ CalmQuest/
 
 <summary><strong>📊 Assessments & Reports</strong></summary>
 
-- Structured questionnaires that evaluate mental well-being.
+- Structured questionnaires ( GHQ-12, GAD-7, and PHQ-9 ) that evaluate mental well-being.
 - AI-generated reports with scores, insights, and recommendations.
 - Full assessment history accessible from the dashboard.
 
