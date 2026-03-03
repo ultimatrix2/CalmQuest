@@ -1,5 +1,6 @@
 package com.calmquest.repository;
 
+import com.calmquest.entity.College;
 import com.calmquest.entity.CommunityPost;
 import com.calmquest.entity.PostReport;
 import com.calmquest.entity.User;
@@ -19,4 +20,6 @@ public interface PostReportRepository extends JpaRepository<PostReport, Long> {
     List<PostReport> findByStatus(PostReport.ReportStatus status);
 
     List<PostReport> findByPostOrderByCreatedAtDesc(CommunityPost post);
+
+    List<PostReport> findByPostCollegeAndStatusOrderByCreatedAtDesc(College college, PostReport.ReportStatus status);
 }

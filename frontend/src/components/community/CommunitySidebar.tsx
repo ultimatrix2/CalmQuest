@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+
 import { TrendingUp, Users, MessageSquare } from 'lucide-react';
 import { communityService } from '@/services/communityService';
 
@@ -107,9 +107,9 @@ export const CommunitySidebar: React.FC<CommunitySidebarProps> = ({ onTagClick }
                     <p>1. Be respectful and kind to others.</p>
                     <p>2. No hate speech or harassment.</p>
                     <p>3. Keep discussions relevant.</p>
-                    <Button variant="link" className="h-auto p-0 text-blue-700 dark:text-blue-300 font-semibold">
+                    {/* <Button variant="link" className="h-auto p-0 text-blue-700 dark:text-blue-300 font-semibold">
                         Read full guidelines →
-                    </Button>
+                    </Button> */}
                 </CardContent>
             </Card>
         </div>

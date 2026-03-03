@@ -1,6 +1,7 @@
 package com.calmquest.controller;
 
 import com.calmquest.entity.User;
+import com.calmquest.entity.PostReport;
 import com.calmquest.service.CollegeAdminService;
 import com.calmquest.service.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
@@ -39,5 +40,32 @@ public class CollegeAdminController {
         User admin = userRepository.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new RuntimeException("Admin not found"));
         return ResponseEntity.ok(collegeAdminService.verifyUser(studentId, isApproved, admin, reason));
+    }
+
+    @GetMapping("/reported-posts")
+    @PreAuthorize("hasRole('COLLEGE_ADMIN')")
+    public ResponseEntity<List<PostReport>> getReportedPosts(@AuthenticationPrincipal UserDetails userDetails) {
+        User admin = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("Admin not found"));
+        return ResponseEntity.ok(collegeAdminService.getReportedPosts(admin));
+    }
+
+    @PutMapping("/reported-posts/{reportId}/dismiss")
+    @PreAuthorize("hasRole('COLLEGE_ADMIN')")
+    public ResponseEntity<PostReport> dismissReport(@PathVariable Long reportId,
+                                                    @AuthenticationPrincipal UserDetails userDetails) {
+        User admin = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("Admin not found"));
+        return ResponseEntity.ok(collegeAdminService.dismissReport(reportId, admin));
+    }
+
+    @DeleteMapping("/reported-posts/{postId}")
+    @PreAuthorize("hasRole('COLLEGE_ADMIN')")
+    public ResponseEntity<Void> deleteReportedPost(@PathVariable Long postId,
+                                                   @AuthenticationPrincipal UserDetails userDetails) {
+        User admin = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("Admin not found"));
+        collegeAdminService.deleteReportedPost(postId, admin);
+        return ResponseEntity.ok().build();
     }
 }

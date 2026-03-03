@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { adminService, type User as AdminUser } from '@/services/adminService';
-import { Loader2, CheckCircle2, XCircle, ShieldCheck, Users } from 'lucide-react';
+import { adminService, type User as AdminUser, type PostReport } from '@/services/adminService';
+import { Loader2, CheckCircle2, XCircle, ShieldCheck, Users, AlertTriangle, FileText, ExternalLink, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -27,37 +28,71 @@ import { Label } from "@/components/ui/label";
 import { toast } from 'sonner';
 
 export const AdminDashboard: React.FC = () => {
+    console.log("[AdminDashboard] Component rendered");
     const { user } = useAuth();
+    console.log("[AdminDashboard] User from useAuth:", user);
+
     const [pendingUsers, setPendingUsers] = useState<AdminUser[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedUser, setSelectedUser] = useState<{ user: AdminUser, action: 'approve' | 'reject' } | null>(null);
     const [rejectionReason, setRejectionReason] = useState("");
+    const [reportedPosts, setReportedPosts] = useState<PostReport[]>([]);
+    const [loadingReports, setLoadingReports] = useState(false);
     const navigate = useNavigate();
 
     const isSuperAdmin = user?.role === 'SUPER_ADMIN';
     const isCollegeAdmin = user?.role === 'COLLEGE_ADMIN';
+    console.log("[AdminDashboard] Roles - isSuperAdmin:", isSuperAdmin, "isCollegeAdmin:", isCollegeAdmin);
 
     useEffect(() => {
-        if (!isSuperAdmin && !isCollegeAdmin) return;
+        console.log("[AdminDashboard] useEffect triggered");
+        if (!isSuperAdmin && !isCollegeAdmin) {
+            console.log("[AdminDashboard] User is not an admin, exiting useEffect");
+            return;
+        }
 
         const fetchPendingUsers = async () => {
+            console.log("[AdminDashboard] fetchPendingUsers started");
             try {
                 setLoading(true);
                 if (isSuperAdmin) {
+                    console.log("[AdminDashboard] Fetching pending admins...");
                     const admins = await adminService.getPendingAdmins();
-                    setPendingUsers(admins);
+                    console.log("[AdminDashboard] Admins fetched:", admins);
+                    setPendingUsers(Array.isArray(admins) ? admins : []);
                 } else if (isCollegeAdmin) {
+                    console.log("[AdminDashboard] Fetching pending students...");
                     const users = await adminService.getPendingUsers();
-                    setPendingUsers(users);
+                    console.log("[AdminDashboard] Students fetched:", users);
+                    setPendingUsers(Array.isArray(users) ? users : []);
                 }
             } catch (error) {
+                console.error("[AdminDashboard] Error fetching users:", error);
                 toast.error("Failed to load pending users");
             } finally {
                 setLoading(false);
             }
         };
 
+        const fetchReports = async () => {
+            if (isCollegeAdmin) {
+                console.log("[AdminDashboard] fetchReports started");
+                try {
+                    setLoadingReports(true);
+                    const reports = await adminService.getReportedPosts();
+                    console.log("[AdminDashboard] Reports fetched:", reports);
+                    setReportedPosts(Array.isArray(reports) ? reports : []);
+                } catch (error) {
+                    console.error("[AdminDashboard] Error fetching reports:", error);
+                    toast.error("Failed to load reported posts");
+                } finally {
+                    setLoadingReports(false);
+                }
+            }
+        };
+
         fetchPendingUsers();
+        fetchReports();
     }, [isSuperAdmin, isCollegeAdmin]);
 
     const handleConfirmAction = async () => {
@@ -66,13 +101,19 @@ export const AdminDashboard: React.FC = () => {
         const { user: targetUser, action } = selectedUser;
         const isApproved = action === 'approve';
 
+        // Close dialogs immediately to prevent stale state issues
+        setSelectedUser(null);
+
         try {
             if (isSuperAdmin) {
                 await adminService.verifyAdmin(targetUser.id, isApproved, action === 'reject' ? rejectionReason : undefined);
                 toast.success(`Admin ${targetUser.fullName} has been ${isApproved ? 'approved' : 'rejected'}`);
             } else if (isCollegeAdmin) {
                 await adminService.verifyUser(targetUser.id, isApproved, action === 'reject' ? rejectionReason : undefined);
-                toast.success(`${targetUser.role.charAt(0) + targetUser.role.slice(1).toLowerCase()} ${targetUser.fullName} has been ${isApproved ? 'approved' : 'rejected'}`);
+                const roleLabel = targetUser.role
+                    ? targetUser.role.charAt(0) + targetUser.role.slice(1).toLowerCase()
+                    : 'User';
+                toast.success(`${roleLabel} ${targetUser.fullName} has been ${isApproved ? 'approved' : 'rejected'}`);
             }
 
             // Remove from list
@@ -81,12 +122,33 @@ export const AdminDashboard: React.FC = () => {
         } catch (error) {
             toast.error("Failed to update user status");
         } finally {
-            setSelectedUser(null);
             setRejectionReason("");
         }
     };
 
+    const handleDismissReport = async (reportId: number) => {
+        try {
+            await adminService.dismissReport(reportId);
+            setReportedPosts(prev => prev.filter(r => r.id !== reportId));
+            toast.success("Report dismissed successfully");
+        } catch (error) {
+            toast.error("Failed to dismiss report");
+        }
+    };
+
+    const handleDeleteReportedPost = async (postId: number) => {
+        try {
+            await adminService.deleteReportedPost(postId);
+            // FIX: use optional chaining to safely access post.id in filter
+            setReportedPosts(prev => prev.filter(r => r.post?.id !== postId));
+            toast.success("Post deleted successfully");
+        } catch (error) {
+            toast.error("Failed to delete post");
+        }
+    };
+
     if (!isSuperAdmin && !isCollegeAdmin) {
+        console.log("[AdminDashboard] Returning Access Denied screen");
         return (
             <div className="flex flex-col items-center justify-center h-[60vh] text-center px-4">
                 <ShieldCheck className="h-16 w-16 text-muted-foreground mb-4 opacity-50" />
@@ -98,6 +160,11 @@ export const AdminDashboard: React.FC = () => {
         );
     }
 
+    // FIX: Derive dialog open state from stable booleans to avoid undefined comparisons
+    const isApproveDialogOpen = selectedUser !== null && selectedUser.action === 'approve';
+    const isRejectDialogOpen = selectedUser !== null && selectedUser.action === 'reject';
+
+    console.log("[AdminDashboard] Returning Main Dashboard screen");
     return (
         <div className="container mx-auto py-8 px-4 max-w-5xl">
             <div className="flex items-center gap-3 mb-8">
@@ -106,103 +173,178 @@ export const AdminDashboard: React.FC = () => {
                     <h1 className="text-3xl font-bold tracking-tight">
                         {isSuperAdmin ? 'Super Admin Dashboard' : 'College Admin Dashboard'}
                     </h1>
-                    <p className="text-muted-foreground">
+                    {/* <p className="text-muted-foreground">
                         {isSuperAdmin
                             ? 'Manage and approve new College Administrators.'
                             : 'Review and verify pending student and doctor registrations for your college community.'}
-                    </p>
+                    </p> */}
                 </div>
             </div>
 
-            <div className="bg-card rounded-xl border shadow-sm">
-                <div className="p-6 border-b">
-                    <h2 className="text-xl font-semibold">Pending Verifications</h2>
-                </div>
+            <Tabs defaultValue="verifications" className="w-full">
+                <TabsList className="mb-4">
+                    <TabsTrigger value="verifications">Pending Verifications</TabsTrigger>
+                    {isCollegeAdmin && <TabsTrigger value="reports">Reported Posts</TabsTrigger>}
+                </TabsList>
 
-                {loading ? (
-                    <div className="flex justify-center items-center py-20">
-                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                    </div>
-                ) : pendingUsers.length === 0 ? (
-                    <div className="text-center py-20 px-4">
-                        <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-4 opacity-80" />
-                        <h3 className="text-lg font-medium">All caught up!</h3>
-                        <p className="text-muted-foreground mt-1">There are no pending verification requests at this time.</p>
-                    </div>
-                ) : (
-                    <ul className="divide-y">
-                        {pendingUsers.map(pendingUser => (
-                            <li key={pendingUser.id} className="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                                <div className="flex items-center gap-4">
-                                    <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold overflow-hidden">
-                                        {pendingUser.profilePicture ? (
-                                            <img src={pendingUser.profilePicture} alt={pendingUser.fullName} className="h-full w-full object-cover" />
-                                        ) : (
-                                            pendingUser.fullName.charAt(0).toUpperCase() // Fallback
-                                        )}
-                                    </div>
-                                    <div>
-                                        <p className="font-medium text-lg">{pendingUser.fullName}</p>
-                                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                            <span>{pendingUser.email}</span>
-                                            <span>•</span>
-                                            <span className="capitalize">{pendingUser.role.replace('_', ' ').toLowerCase()}</span>
-                                            {isSuperAdmin && pendingUser.college && (
-                                                <>
+                <TabsContent value="verifications">
+                    <div className="bg-card rounded-xl border shadow-sm">
+                        <div className="p-6 border-b">
+                            <h2 className="text-xl font-semibold">Pending Verifications</h2>
+                        </div>
+
+                        {loading ? (
+                            <div className="flex justify-center items-center py-20">
+                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                            </div>
+                        ) : !Array.isArray(pendingUsers) || pendingUsers.length === 0 ? (
+                            <div className="text-center py-20 px-4">
+                                <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-4 opacity-80" />
+                                <h3 className="text-lg font-medium">All caught up!</h3>
+                                <p className="text-muted-foreground mt-1">There are no pending verification requests at this time.</p>
+                            </div>
+                        ) : (
+                            <ul className="divide-y">
+                                {Array.isArray(pendingUsers) && pendingUsers.map(pendingUser => (
+                                    <li key={pendingUser.id} className="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                        <div className="flex items-center gap-4">
+                                            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold overflow-hidden">
+                                                {pendingUser.profilePicture ? (
+                                                    <img src={pendingUser.profilePicture} alt={pendingUser.fullName} className="h-full w-full object-cover" />
+                                                ) : (
+                                                    pendingUser.fullName?.charAt(0)?.toUpperCase() || '?'
+                                                )}
+                                            </div>
+                                            <div>
+                                                <p className="font-medium text-lg">{pendingUser.fullName}</p>
+                                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                                    <span>{pendingUser.email}</span>
                                                     <span>•</span>
-                                                    <span className="font-medium text-primary/80">{pendingUser.college.name}</span>
-                                                </>
-                                            )}
+                                                    {/* FIX: safely handle undefined role */}
+                                                    <span className="capitalize">{pendingUser.role?.replace(/_/g, ' ')?.toLowerCase() ?? 'User'}</span>
+                                                    {isSuperAdmin && pendingUser.college && (
+                                                        <>
+                                                            <span>•</span>
+                                                            <span className="font-medium text-primary/80">{pendingUser.college.name}</span>
+                                                        </>
+                                                    )}
+                                                </div>
+                                                {pendingUser.role === 'DOCTOR' && (
+                                                    <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                                                        <span>Spec: {pendingUser.specialization || 'N/A'}</span>
+                                                        <span>•</span>
+                                                        <span>License: {pendingUser.licenseNumber || 'N/A'}</span>
+                                                    </div>
+                                                )}
+                                                {pendingUser.role === 'STUDENT' && (
+                                                    <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                                                        <span>Course: {pendingUser.course || 'N/A'} ({pendingUser.studentYear || '1'})</span>
+                                                        <span>•</span>
+                                                        <span>Reg: {pendingUser.registrationNumber || 'N/A'}</span>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
-                                        {pendingUser.role === 'DOCTOR' && (
-                                            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                                                <span>Spec: {pendingUser.specialization || 'N/A'}</span>
-                                                <span>•</span>
-                                                <span>License: {pendingUser.licenseNumber || 'N/A'}</span>
-                                            </div>
-                                        )}
-                                        {pendingUser.role === 'STUDENT' && (
-                                            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                                                <span>Course: {pendingUser.course || 'N/A'} ({pendingUser.studentYear || '1'})</span>
-                                                <span>•</span>
-                                                <span>Reg: {pendingUser.registrationNumber || 'N/A'}</span>
-                                            </div>
-                                        )}
-                                    </div>
+                                        <div className="flex items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0">
+                                            <Button
+                                                variant="ghost"
+                                                className="w-full sm:w-auto"
+                                                onClick={() => navigate('/dashboard/profile?userId=' + pendingUser.id)}
+                                            >
+                                                View Profile
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                className="w-full sm:w-auto text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/20"
+                                                onClick={() => setSelectedUser({ user: pendingUser, action: 'reject' })}
+                                            >
+                                                <XCircle className="h-4 w-4 mr-2" />
+                                                Reject
+                                            </Button>
+                                            <Button
+                                                className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white"
+                                                onClick={() => setSelectedUser({ user: pendingUser, action: 'approve' })}
+                                            >
+                                                <CheckCircle2 className="h-4 w-4 mr-2" />
+                                                Approve
+                                            </Button>
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </div>
+                </TabsContent>
+
+                {isCollegeAdmin && (
+                    <TabsContent value="reports">
+                        <div className="bg-card rounded-xl border shadow-sm">
+                            <div className="p-6 border-b">
+                                <h2 className="text-xl font-semibold">Reported Posts</h2>
+                            </div>
+
+                            {loadingReports ? (
+                                <div className="flex justify-center items-center py-20">
+                                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
                                 </div>
-                                <div className="flex items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0">
-                                    <Button
-                                        variant="ghost"
-                                        className="w-full sm:w-auto"
-                                        onClick={() => navigate('/dashboard/profile?userId=' + pendingUser.id)}
-                                    >
-                                        View Profile
-                                    </Button>
-                                    <Button
-                                        variant="outline"
-                                        className="w-full sm:w-auto text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/20"
-                                        onClick={() => setSelectedUser({ user: pendingUser, action: 'reject' })}
-                                    >
-                                        <XCircle className="h-4 w-4 mr-2" />
-                                        Reject
-                                    </Button>
-                                    <Button
-                                        className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white"
-                                        onClick={() => setSelectedUser({ user: pendingUser, action: 'approve' })}
-                                    >
-                                        <CheckCircle2 className="h-4 w-4 mr-2" />
-                                        Approve
-                                    </Button>
+                            ) : !Array.isArray(reportedPosts) || reportedPosts.length === 0 ? (
+                                <div className="text-center py-20 px-4">
+                                    <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-4 opacity-80" />
+                                    <h3 className="text-lg font-medium">All clear!</h3>
+                                    <p className="text-muted-foreground mt-1">No community posts have been reported.</p>
                                 </div>
-                            </li>
-                        ))}
-                    </ul>
+                            ) : (
+                                <ul className="divide-y">
+                                    {Array.isArray(reportedPosts) && reportedPosts.map(report => (
+                                        <li key={report.id} className="p-6 flex flex-col gap-4">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-2">
+                                                    <AlertTriangle className="h-5 w-5 text-orange-500" />
+                                                    <span className="font-semibold text-lg">Reason: {report.reason?.replace(/_/g, ' ') || 'Unknown'}</span>
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    <Button variant="outline" size="sm" onClick={() => handleDismissReport(report.id)}>
+                                                        Dismiss Report
+                                                    </Button>
+                                                    {/* FIX: guard against undefined post.id */}
+                                                    {report.post?.id != null && (
+                                                        <Button variant="destructive" size="sm" onClick={() => handleDeleteReportedPost(report.post.id)}>
+                                                            <Trash2 className="h-4 w-4 mr-2" />
+                                                            Delete Post
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="bg-muted/50 p-4 rounded-md space-y-2">
+                                                <div className="text-sm font-medium text-muted-foreground">Reported by {report.reporter?.fullName || 'Anonymous'}</div>
+                                                {report.description && (
+                                                    <div className="text-sm italic text-muted-foreground border-l-2 border-primary/50 pl-3">"{report.description}"</div>
+                                                )}
+                                            </div>
+                                            <div className="border rounded-md p-4">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <FileText className="h-4 w-4 text-muted-foreground" />
+                                                    {/* FIX: safe chaining on nested post.author */}
+                                                    <span className="font-semibold text-sm">Post by {report.post?.author?.fullName || report.post?.authorName || 'Unknown User'}</span>
+                                                </div>
+                                                <p className="text-sm line-clamp-3">{report.post?.content || 'Content unavailable'}</p>
+                                                <Button variant="link" size="sm" className="px-0 mt-2 h-auto" onClick={() => navigate('/dashboard/community')}>
+                                                    <ExternalLink className="h-3 w-3 mr-1" />
+                                                    Go to Community
+                                                </Button>
+                                            </div>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
+                    </TabsContent>
                 )}
-            </div>
+            </Tabs>
 
             {/* Approval Confirmation */}
             <AlertDialog
-                open={selectedUser?.action === 'approve'}
+                open={isApproveDialogOpen}
                 onOpenChange={(open) => {
                     if (!open) setSelectedUser(null);
                 }}
@@ -231,7 +373,7 @@ export const AdminDashboard: React.FC = () => {
 
             {/* Rejection Dialog */}
             <Dialog
-                open={selectedUser?.action === 'reject'}
+                open={isRejectDialogOpen}
                 onOpenChange={(open) => {
                     if (!open) {
                         setSelectedUser(null);
@@ -257,7 +399,7 @@ export const AdminDashboard: React.FC = () => {
                         />
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setSelectedUser(null)}>Cancel</Button>
+                        <Button variant="outline" onClick={() => { setSelectedUser(null); setRejectionReason(""); }}>Cancel</Button>
                         <Button
                             variant="destructive"
                             onClick={handleConfirmAction}

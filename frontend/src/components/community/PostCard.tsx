@@ -45,6 +45,13 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 
 interface PostCardProps {
@@ -497,17 +504,18 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onUpdate, onDelete, cu
                     <div className="space-y-4 py-2">
                         <div className="space-y-2">
                             <label className="text-sm font-medium">Reason</label>
-                            <select
-                                className="w-full p-2 rounded-md border text-sm bg-transparent"
-                                value={reportReason}
-                                onChange={(e) => setReportReason(e.target.value)}
-                            >
-                                <option value="SPAM">Spam</option>
-                                <option value="HARASSMENT">Harassment</option>
-                                <option value="INAPPROPRIATE">Inappropriate Content</option>
-                                <option value="MISINFORMATION">Misinformation</option>
-                                <option value="OTHER">Other</option>
-                            </select>
+                            <Select value={reportReason} onValueChange={setReportReason}>
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Select a reason" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="SPAM">Spam</SelectItem>
+                                    <SelectItem value="HARASSMENT">Harassment</SelectItem>
+                                    <SelectItem value="INAPPROPRIATE">Inappropriate Content</SelectItem>
+                                    <SelectItem value="MISINFORMATION">Misinformation</SelectItem>
+                                    <SelectItem value="OTHER">Other</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="space-y-2">
                             <label className="text-sm font-medium">Description (Optional)</label>

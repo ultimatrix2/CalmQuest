@@ -223,13 +223,7 @@ export const CommunityPage: React.FC = () => {
                     <div className="sticky top-6 space-y-6 h-fit">
                         <CommunitySidebar onTagClick={(tag) => setSearch(tag)} />
 
-                        {/* Footer / Links */}
-                        <div className="flex flex-wrap gap-2 text-xs text-muted-foreground px-2">
-                            <span>Privacy</span> &middot;
-                            <span>Terms</span> &middot;
-                            <span>Guidelines</span> &middot;
-                            <span>CalmQuest © 2026</span>
-                        </div>
+
                     </div>
                 </div>
             </div>

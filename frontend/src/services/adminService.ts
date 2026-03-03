@@ -25,6 +25,21 @@ export interface User {
     registrationNumber?: string;
 }
 
+export interface PostReport {
+    id: number;
+    reporter: User;
+    post: {
+        id: number;
+        content: string;
+        authorName?: string;
+        author?: { fullName: string };
+    };
+    reason: string;
+    description: string;
+    status: string;
+    createdAt: string;
+}
+
 export const adminService = {
     // Super Admin methods
     getPendingAdmins: async () => {
@@ -46,5 +61,17 @@ export const adminService = {
         const url = `${API_URL}/college-admin/verify-student/${userId}?isApproved=${isApproved}${reason ? `&reason=${encodeURIComponent(reason)}` : ''}`;
         const response = await axios.put(url, {}, getAuthHeader());
         return response.data as User;
+    },
+    getReportedPosts: async () => {
+        const response = await axios.get(`${API_URL}/college-admin/reported-posts`, getAuthHeader());
+        return response.data as PostReport[];
+    },
+    dismissReport: async (reportId: number) => {
+        const response = await axios.put(`${API_URL}/college-admin/reported-posts/${reportId}/dismiss`, {}, getAuthHeader());
+        return response.data as PostReport;
+    },
+    deleteReportedPost: async (postId: number) => {
+        const response = await axios.delete(`${API_URL}/college-admin/reported-posts/${postId}`, getAuthHeader());
+        return response.data;
     }
 };
