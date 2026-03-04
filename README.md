@@ -10,6 +10,23 @@ _An AI-powered platform that helps students and individuals track, understand, a
 
 ---
 
+<div align="center">
+  
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-1B5E20?style=for-the-badge&logo=springboot&logoColor=white)
+![Java](https://img.shields.io/badge/Java-B71C1C?style=for-the-badge&logo=openjdk&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-0D47A1?style=for-the-badge&logo=postgresql&logoColor=white)
+![React](https://img.shields.io/badge/React-000000?style=for-the-badge&logo=react&logoColor=61DAFB)
+![TypeScript](https://img.shields.io/badge/TypeScript-1A237E?style=for-the-badge&logo=typescript&logoColor=white)
+![TailwindCSS](https://img.shields.io/badge/TailwindCSS-004D40?style=for-the-badge&logo=tailwindcss&logoColor=38BDF8)
+![shadcn/ui](https://img.shields.io/badge/shadcn%2Fui-000000?style=for-the-badge&logo=radixui&logoColor=white)
+![Redux Toolkit](https://img.shields.io/badge/Redux%20Toolkit-311B92?style=for-the-badge&logo=redux&logoColor=white)
+![face-api.js](https://img.shields.io/badge/face--api.js-FF6F00?style=for-the-badge&logo=tensorflow&logoColor=white)
+![Jitsi](https://img.shields.io/badge/Jitsi-212121?style=for-the-badge&logo=jitsi&logoColor=FFD600)
+
+</div>
+
+---
+
 ##  Table of Contents
 
 - [Features](#-features)
