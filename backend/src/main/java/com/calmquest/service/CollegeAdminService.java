@@ -95,4 +95,36 @@ public class CollegeAdminService {
     public void deleteReportedPost(Long postId, User admin) {
         communityService.deletePost(postId, admin);
     }
+
+    public java.util.Map<String, String> getEmergencyContacts(User admin) {
+        if (admin.getCommunityStatus() != User.CommunityStatus.APPROVED) {
+            throw new RuntimeException("You must be verified by the Super Admin to view emergency contacts");
+        }
+        College college = admin.getCollege();
+        java.util.Map<String, String> contacts = new java.util.HashMap<>();
+        contacts.put("emergencyPhone", college.getEmergencyPhone());
+        contacts.put("emergencyEmail", college.getEmergencyEmail());
+        return contacts;
+    }
+
+    @Transactional
+    public java.util.Map<String, String> updateEmergencyContacts(String phone, String email, User admin) {
+        if (admin.getCommunityStatus() != User.CommunityStatus.APPROVED) {
+            throw new RuntimeException("You must be verified by the Super Admin to update emergency contacts");
+        }
+        College college = admin.getCollege();
+        college.setEmergencyPhone(phone);
+        college.setEmergencyEmail(email);
+
+        // Save college
+        // Since college is managed by Hibernate, setting the fields might be enough if within a transaction,
+        // but it's better to explicitly save it if we had a CollegeRepository.
+        // As CollegeAdminService doesn't inject CollegeRepository, we rely on dirty checking or we can add CollegeRepository.
+        // Dirty checking will work because college is associated with the admin which is fetched.
+        // Let's return the updated fields.
+        java.util.Map<String, String> contacts = new java.util.HashMap<>();
+        contacts.put("emergencyPhone", college.getEmergencyPhone());
+        contacts.put("emergencyEmail", college.getEmergencyEmail());
+        return contacts;
+    }
 }

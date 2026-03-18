@@ -38,6 +38,13 @@ export const AdminDashboard: React.FC = () => {
     const [rejectionReason, setRejectionReason] = useState("");
     const [reportedPosts, setReportedPosts] = useState<PostReport[]>([]);
     const [loadingReports, setLoadingReports] = useState(false);
+    
+    // Emergency Contacts State
+    const [emergencyPhone, setEmergencyPhone] = useState("");
+    const [emergencyEmail, setEmergencyEmail] = useState("");
+    const [loadingContacts, setLoadingContacts] = useState(false);
+    const [savingContacts, setSavingContacts] = useState(false);
+
     const navigate = useNavigate();
 
     const isSuperAdmin = user?.role === 'SUPER_ADMIN';
@@ -91,9 +98,37 @@ export const AdminDashboard: React.FC = () => {
             }
         };
 
+        const fetchContacts = async () => {
+            if (isCollegeAdmin) {
+                try {
+                    setLoadingContacts(true);
+                    const contacts = await adminService.getEmergencyContacts();
+                    setEmergencyPhone(contacts.emergencyPhone || "");
+                    setEmergencyEmail(contacts.emergencyEmail || "");
+                } catch (error) {
+                    toast.error("Failed to load emergency contacts");
+                } finally {
+                    setLoadingContacts(false);
+                }
+            }
+        };
+
         fetchPendingUsers();
         fetchReports();
+        fetchContacts();
     }, [isSuperAdmin, isCollegeAdmin]);
+
+    const handleSaveContacts = async () => {
+        try {
+            setSavingContacts(true);
+            await adminService.updateEmergencyContacts(emergencyPhone, emergencyEmail);
+            toast.success("Emergency contacts updated successfully");
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || "Failed to update emergency contacts");
+        } finally {
+            setSavingContacts(false);
+        }
+    };
 
     const handleConfirmAction = async () => {
         if (!selectedUser) return;
@@ -182,9 +217,10 @@ export const AdminDashboard: React.FC = () => {
             </div>
 
             <Tabs defaultValue="verifications" className="w-full">
-                <TabsList className="mb-4">
+                <TabsList className="mb-4 flex-wrap pb-2 sm:pb-0 h-auto sm:h-10">
                     <TabsTrigger value="verifications">Pending Verifications</TabsTrigger>
                     {isCollegeAdmin && <TabsTrigger value="reports">Reported Posts</TabsTrigger>}
+                    {isCollegeAdmin && <TabsTrigger value="emergency">Emergency Contacts</TabsTrigger>}
                 </TabsList>
 
                 <TabsContent value="verifications">
@@ -336,6 +372,62 @@ export const AdminDashboard: React.FC = () => {
                                         </li>
                                     ))}
                                 </ul>
+                            )}
+                        </div>
+                    </TabsContent>
+                )}
+
+                {isCollegeAdmin && (
+                    <TabsContent value="emergency">
+                        <div className="bg-card rounded-xl border shadow-sm p-6">
+                            <h2 className="text-xl font-semibold mb-2">Emergency Contacts</h2>
+                            <p className="text-muted-foreground mb-6">Set the official emergency contact information for your college. This will be used in the SOS feature alerts.</p>
+                            
+                            {loadingContacts ? (
+                                <div className="flex justify-center items-center py-10">
+                                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                                </div>
+                            ) : (
+                                <div className="space-y-5 max-w-md">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="emergencyPhone">Emergency Phone Number</Label>
+                                        <div className="relative">
+                                            <AlertTriangle className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                            <input 
+                                                id="emergencyPhone"
+                                                type="tel" 
+                                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 pl-9"
+                                                placeholder="+1 (555) 123-4567"
+                                                value={emergencyPhone}
+                                                onChange={(e) => setEmergencyPhone(e.target.value)}
+                                            />
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="space-y-2">
+                                        <Label htmlFor="emergencyEmail">Emergency Email Address</Label>
+                                        <div className="relative">
+                                            <AlertTriangle className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                            <input 
+                                                id="emergencyEmail"
+                                                type="email" 
+                                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 pl-9"
+                                                placeholder="emergency@college.edu"
+                                                value={emergencyEmail}
+                                                onChange={(e) => setEmergencyEmail(e.target.value)}
+                                            />
+                                        </div>
+                                    </div>
+                                    
+                                    <Button 
+                                        onClick={handleSaveContacts} 
+                                        disabled={savingContacts}
+                                        className="w-full mt-2"
+                                    >
+                                        {savingContacts ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                        Save Emergency Contacts
+                                    </Button>
+                                </div>
                             )}
                         </div>
                     </TabsContent>

@@ -26,6 +26,7 @@ export interface AuthResponse {
     fullName: string;
     email: string;
     role: string;
+    emailVerificationRequired?: boolean;
 }
 
 export interface User {
@@ -33,6 +34,15 @@ export interface User {
     fullName: string;
     email: string;
     role: string;
+}
+
+export interface DailyRecommendation {
+    id: number;
+    recommendations: string;
+    category: string;
+    severityScore: number;
+    generatedAt: string;
+    isRead: boolean;
 }
 
 class AuthService {
@@ -55,7 +65,12 @@ class AuthService {
         }
 
         const authResponse: AuthResponse = await response.json();
-        this.setSession(authResponse);
+        
+        // Don't save session if email verification is required
+        if (!authResponse.emailVerificationRequired) {
+            this.setSession(authResponse);
+        }
+        
         return authResponse;
     }
 
@@ -74,8 +89,113 @@ class AuthService {
         }
 
         const authResponse: AuthResponse = await response.json();
+        
+        // Don't save session if email verification is required
+        if (!authResponse.emailVerificationRequired) {
+            this.setSession(authResponse);
+        }
+        
+        return authResponse;
+    }
+
+    async verifyOtp(email: string, otp: string): Promise<AuthResponse> {
+        const response = await fetch(`${API_BASE_URL}/auth/verify-otp`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, otp }),
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'OTP verification failed');
+        }
+
+        const authResponse: AuthResponse = await response.json();
         this.setSession(authResponse);
         return authResponse;
+    }
+
+    async resendOtp(email: string): Promise<void> {
+        const response = await fetch(`${API_BASE_URL}/auth/resend-otp`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email }),
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to resend OTP');
+        }
+    }
+
+    async getTodayRecommendation(): Promise<DailyRecommendation | null> {
+        const response = await fetch(`${API_BASE_URL}/recommendations/today`, {
+            headers: {
+                ...this.getAuthHeader(),
+            },
+        });
+
+        if (!response.ok) return null;
+        const data = await response.json();
+        if (data.message) return null; // No recommendation available
+        return data;
+    }
+
+    async getRecommendationHistory(): Promise<DailyRecommendation[]> {
+        const response = await fetch(`${API_BASE_URL}/recommendations/history`, {
+            headers: {
+                ...this.getAuthHeader(),
+            },
+        });
+
+        if (!response.ok) return [];
+        return response.json();
+    }
+
+    async generateRecommendation(): Promise<DailyRecommendation | null> {
+        const response = await fetch(`${API_BASE_URL}/recommendations/generate`, {
+            method: 'POST',
+            headers: {
+                ...this.getAuthHeader(),
+            },
+        });
+
+        if (!response.ok) return null;
+        return response.json();
+    }
+
+    async forgotPassword(email: string): Promise<void> {
+        const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email }),
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to request password reset');
+        }
+    }
+
+    async resetPassword(token: string, newPassword: string): Promise<void> {
+        const response = await fetch(`${API_BASE_URL}/auth/reset-password`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ token, newPassword }),
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to reset password');
+        }
     }
 
     private setSession(authResponse: AuthResponse): void {

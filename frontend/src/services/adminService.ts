@@ -73,5 +73,13 @@ export const adminService = {
     deleteReportedPost: async (postId: number) => {
         const response = await axios.delete(`${API_URL}/college-admin/reported-posts/${postId}`, getAuthHeader());
         return response.data;
+    },
+    getEmergencyContacts: async () => {
+        const response = await axios.get(`${API_URL}/college-admin/emergency-contacts`, getAuthHeader());
+        return response.data as { emergencyPhone?: string, emergencyEmail?: string };
+    },
+    updateEmergencyContacts: async (emergencyPhone: string, emergencyEmail: string) => {
+        const response = await axios.put(`${API_URL}/college-admin/emergency-contacts`, { emergencyPhone, emergencyEmail }, getAuthHeader());
+        return response.data as { emergencyPhone?: string, emergencyEmail?: string };
     }
 };

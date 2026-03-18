@@ -5,6 +5,8 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { BrowserRouter, Routes, Route } from "react-router-dom"
 import HomePage from "@/pages/HomePage"
 import AuthPage from "@/pages/AuthPage"
+import ForgotPasswordPage from "@/pages/ForgotPasswordPage"
+import ResetPasswordPage from "@/pages/ResetPasswordPage"
 
 import { OAuth2RedirectHandler } from "@/components/oauth2-redirect-handler"
 import { Toaster } from "@/components/ui/sonner"
@@ -24,6 +26,7 @@ const BookAppointment = React.lazy(() => import("@/pages/dashboard/doctor/BookAp
 const MyAppointments = React.lazy(() => import("@/pages/dashboard/doctor/MyAppointments"));
 const ManageAppointments = React.lazy(() => import("@/pages/dashboard/doctor/ManageAppointments"));
 const MeetingRoom = React.lazy(() => import("@/pages/dashboard/doctor/MeetingRoom"));
+const RecommendationsPage = React.lazy(() => import("@/pages/dashboard/RecommendationsPage"));
 
 function App() {
     return (
@@ -38,6 +41,8 @@ function App() {
                             <Route path="/" element={<HomePage />} />
                             <Route path="/login" element={<AuthPage />} />
                             <Route path="/signup" element={<AuthPage />} />
+                            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                            <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
                         </Route>
 
                         {/* Protected Routes - accessible only when logged in */}
@@ -52,6 +57,11 @@ function App() {
                                 <Route path="report" element={<ReportPage />} />
                                 <Route path="report/:reportId" element={<ReportPage />} />
                                 <Route path="assessment-history" element={<AssessmentHistoryPage />} />
+                                <Route path="recommendations" element={
+                                    <React.Suspense fallback={<div>Loading...</div>}>
+                                        <RecommendationsPage />
+                                    </React.Suspense>
+                                } />
 
                                 {/* Student Appointment Routes */}
                                 <Route path="doctor/book" element={

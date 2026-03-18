@@ -68,4 +68,22 @@ public class CollegeAdminController {
         collegeAdminService.deleteReportedPost(postId, admin);
         return ResponseEntity.ok().build();
     }
+
+    @GetMapping("/emergency-contacts")
+    @PreAuthorize("hasRole('COLLEGE_ADMIN')")
+    public ResponseEntity<java.util.Map<String, String>> getEmergencyContacts(@AuthenticationPrincipal UserDetails userDetails) {
+        User admin = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("Admin not found"));
+        return ResponseEntity.ok(collegeAdminService.getEmergencyContacts(admin));
+    }
+
+    @PutMapping("/emergency-contacts")
+    @PreAuthorize("hasRole('COLLEGE_ADMIN')")
+    public ResponseEntity<java.util.Map<String, String>> updateEmergencyContacts(
+            @RequestBody java.util.Map<String, String> contacts,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        User admin = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("Admin not found"));
+        return ResponseEntity.ok(collegeAdminService.updateEmergencyContacts(contacts.get("emergencyPhone"), contacts.get("emergencyEmail"), admin));
+    }
 }

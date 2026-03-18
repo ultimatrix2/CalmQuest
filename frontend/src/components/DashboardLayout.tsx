@@ -19,6 +19,8 @@ import { Button } from "@/components/ui/button"
 import { Edit } from "lucide-react"
 import { Outlet, useLocation } from "react-router-dom"
 import { useState, useEffect } from "react"
+import { authService } from "@/services/authService"
+import { SosButton } from "@/components/SosButton"
 
 
 
@@ -90,6 +92,7 @@ export default function DashboardLayout() {
                 <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
                     <Outlet context={{ isEditMode, setIsEditMode }} />
                 </div>
+                {authService.getCurrentUser()?.role === "STUDENT" && <SosButton />}
             </SidebarInset>
         </SidebarProvider>
     )

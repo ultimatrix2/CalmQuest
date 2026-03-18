@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import html2pdf from 'html2pdf.js';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { chatService, type AIReport } from '@/services/chatService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,6 +17,7 @@ import {
     TrendingUp,
     Calendar,
     FileText,
+    Download,
 } from 'lucide-react';
 
 // Severity color helpers
@@ -86,6 +88,21 @@ const ReportPage: React.FC = () => {
     const [reports, setReports] = useState<AIReport[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedReport, setSelectedReport] = useState<AIReport | null>(null);
+    const reportRef = useRef<HTMLDivElement>(null);
+
+    const handleDownloadPdf = () => {
+        if (!reportRef.current) return;
+
+        const opt = {
+            margin: 0.5,
+            filename: 'calmquest-report.pdf',
+            image: { type: 'jpeg' as const, quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: 'in' as const, format: 'letter', orientation: 'portrait' as const }
+        };
+
+        html2pdf().set(opt).from(reportRef.current).save();
+    };
 
     useEffect(() => {
         const loadReports = async () => {
@@ -153,20 +170,28 @@ const ReportPage: React.FC = () => {
 
     return (
         <div className="container mx-auto py-6 px-4 max-w-5xl">
-            <div className="flex items-center gap-3 mb-6">
-                <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-                    <ArrowLeft className="h-4 w-4" />
-                </Button>
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight">AI Report</h1>
-                    <p className="text-sm text-muted-foreground">
-                        Your mental well-being assessment summary
-                    </p>
+            <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                    <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+                        <ArrowLeft className="h-4 w-4" />
+                    </Button>
+                    <div>
+                        <h1 className="text-2xl font-bold tracking-tight">AI Report</h1>
+                        <p className="text-sm text-muted-foreground">
+                            Your mental well-being assessment summary
+                        </p>
+                    </div>
                 </div>
+                {displayReport && (
+                    <Button onClick={handleDownloadPdf} variant="outline" className="gap-2">
+                        <Download className="h-4 w-4" />
+                        Download PDF
+                    </Button>
+                )}
             </div>
 
             {displayReport && (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div ref={reportRef} className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-2 bg-background/50 rounded-xl">
                     {/* Main Report */}
                     <div className="lg:col-span-2 space-y-6">
                         {/* Combined Severity */}
