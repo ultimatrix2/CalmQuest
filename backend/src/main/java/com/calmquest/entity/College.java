@@ -30,4 +30,8 @@ public class College {
     private String location;
 
     private String domain; // e.g. @mit.edu
+
+    private String emergencyPhone;
+
+    private String emergencyEmail;
 }

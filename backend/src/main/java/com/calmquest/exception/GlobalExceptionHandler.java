@@ -23,12 +23,12 @@ public class GlobalExceptionHandler {
             String errorMessage = error.getDefaultMessage();
             errors.put(fieldName, errorMessage);
         });
-        
+
         Map<String, Object> response = new HashMap<>();
         response.put("timestamp", LocalDateTime.now());
         response.put("status", HttpStatus.BAD_REQUEST.value());
         response.put("errors", errors);
-        
+
         return ResponseEntity.badRequest().body(response);
     }
 
@@ -38,7 +38,7 @@ public class GlobalExceptionHandler {
         response.put("timestamp", LocalDateTime.now());
         response.put("status", HttpStatus.UNAUTHORIZED.value());
         response.put("message", "Invalid email or password");
-        
+
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
 
@@ -48,7 +48,7 @@ public class GlobalExceptionHandler {
         response.put("timestamp", LocalDateTime.now());
         response.put("status", HttpStatus.BAD_REQUEST.value());
         response.put("message", ex.getMessage());
-        
+
         return ResponseEntity.badRequest().body(response);
     }
 }

@@ -21,6 +21,8 @@ public class AuthResponse {
     private String collegeName;
     private String profilePicture;
     private String communityStatus;
+    @Builder.Default
+    private boolean emailVerificationRequired = false;
 
     public AuthResponse(String token, User user) {
         this.token = token;
@@ -31,6 +33,6 @@ public class AuthResponse {
         this.role = user.getRole().name();
         this.collegeName = user.getCollege() != null ? user.getCollege().getName() : null;
         this.profilePicture = user.getProfilePicture();
-        this.communityStatus = user.getCommunityStatus().name();
+        this.communityStatus = user.getCommunityStatus() != null ? user.getCommunityStatus().name() : null;
     }
 }

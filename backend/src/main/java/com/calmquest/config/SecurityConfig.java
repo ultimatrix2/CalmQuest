@@ -2,6 +2,7 @@ package com.calmquest.config;
 
 import com.calmquest.service.CustomUserDetailsService;
 import com.calmquest.security.jwt.JwtAuthFilter;
+import com.calmquest.security.RateLimitingFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -33,7 +34,9 @@ public class SecurityConfig {
 
     private final CustomUserDetailsService userDetailsService;
     private final JwtAuthFilter jwtAuthFilter;
-//    private final com.calmquest.security.oauth2.OAuth2SuccessHandler oAuth2SuccessHandler;
+    private final RateLimitingFilter rateLimitingFilter;
+    // private final com.calmquest.security.oauth2.OAuth2SuccessHandler
+    // oAuth2SuccessHandler;
     private final PasswordEncoder passwordEncoder;
 
     @Bean
@@ -43,15 +46,16 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/login/**").permitAll() // Modified
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/login/**").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
-                        .anyRequest().authenticated()
-                )
-//                .oauth2Login(oauth2 -> oauth2 // Added OAuth2 Login configuration
-//                        .successHandler(oAuth2SuccessHandler)
-//                )
+                        .anyRequest().authenticated())
+                // .oauth2Login(oauth2 -> oauth2 // Added OAuth2 Login configuration
+                // .successHandler(oAuth2SuccessHandler)
+                // )
                 .authenticationProvider(authenticationProvider())
+                .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         // For H2 console (development only)
@@ -86,6 +90,5 @@ public class SecurityConfig {
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
-
 
 }
