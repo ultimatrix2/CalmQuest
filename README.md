@@ -249,6 +249,12 @@ Create a `.env` file inside the **`backend/`** directory with the following vari
 
 ---
 
+##  Flow Control
+
+![Navigation](assets/images/flowControl.png)
+
+---
+
 ##  Screenshots
 
 ###  Dashboard
