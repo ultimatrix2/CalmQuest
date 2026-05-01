@@ -558,7 +558,7 @@ public class CommunityService {
 
         Map<Long, Map<String, Integer>> reactionsByPostId = new HashMap<>();
         for (Object[] row : reactionRepository.countByPostIdsGroupByPostAndEmoji(postIds)) {
-            Long pid = (Long) row[0];
+            Long pid = ((Number) row[0]).longValue();
             String emoji = (String) row[1];
             int count = ((Number) row[2]).intValue();
             reactionsByPostId.computeIfAbsent(pid, k -> new LinkedHashMap<>()).put(emoji, count);
@@ -566,7 +566,7 @@ public class CommunityService {
 
         Map<Long, List<String>> userReactionsByPostId = new HashMap<>();
         for (Object[] row : reactionRepository.findPostIdAndEmojiByUserAndPostIdIn(currentUser, postIds)) {
-            Long pid = (Long) row[0];
+            Long pid = ((Number) row[0]).longValue();
             String emoji = (String) row[1];
             userReactionsByPostId.computeIfAbsent(pid, k -> new ArrayList<>()).add(emoji);
         }
