@@ -532,7 +532,7 @@ public class CommunityService {
 
     // ─── Batch fetch context (eliminates N+1 in feed) ───────
 
-    static class FeedContext {
+    private static class FeedContext {
         final Set<Long> likedPostIds;
         final Set<Long> bookmarkedPostIds;
         final Map<Long, Map<String, Integer>> reactionsByPostId;
@@ -553,6 +553,10 @@ public class CommunityService {
     }
 
     private FeedContext buildFeedContext(List<Long> postIds, User currentUser) {
+        if (postIds == null || postIds.isEmpty() || currentUser == null) {
+            return new FeedContext(Collections.emptySet(), Collections.emptySet(),
+                    Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap());
+        }
         Set<Long> likedPostIds = likeRepository.findLikedPostIdsByUserAndPostIdIn(currentUser, postIds);
         Set<Long> bookmarkedPostIds = bookmarkRepository.findBookmarkedPostIdsByUserAndPostIdIn(currentUser, postIds);
 
