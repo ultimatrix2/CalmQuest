@@ -60,7 +60,16 @@ public class CommunityService {
             };
         }
 
-        return posts.map(post -> toDTO(post, currentUser));
+        List<Long> postIds = posts.getContent().stream()
+                .map(CommunityPost::getId)
+                .collect(Collectors.toList());
+
+        if (postIds.isEmpty()) {
+            return posts.map(post -> toDTO(post, currentUser));
+        }
+
+        FeedContext ctx = buildFeedContext(postIds, currentUser);
+        return posts.map(post -> toDTOWithContext(post, currentUser, ctx));
     }
 
     // ─── Get Single Post ────────────────────────────────────
@@ -499,6 +508,107 @@ public class CommunityService {
                 .updatedAt(post.getUpdatedAt())
                 .likedByCurrentUser(liked)
                 .bookmarkedByCurrentUser(bookmarked)
+                .reactions(reactionsMap)
+                .currentUserReactions(userReactions)
+                .media(mediaList);
+
+        if (Boolean.TRUE.equals(post.getIsAnonymous())) {
+            builder.authorId(null)
+                   .authorName("Anonymous")
+                   .authorAvatar(null)
+                   .authorRole(null);
+        } else {
+            User author = post.getAuthor();
+            builder.authorId(author.getId())
+                   .authorName(author.getFullName())
+                   .authorAvatar(author.getProfilePicture())
+                   .authorRole(author.getRole() != null ? author.getRole().name() : null);
+        }
+
+        return builder.build();
+    }
+
+    // ─── Batch fetch context (eliminates N+1 in feed) ───────
+
+    private static class FeedContext {
+        final Set<Long> likedPostIds;
+        final Set<Long> bookmarkedPostIds;
+        final Map<Long, Map<String, Integer>> reactionsByPostId;
+        final Map<Long, List<String>> userReactionsByPostId;
+        final Map<Long, List<PostMedia>> mediaByPostId;
+
+        FeedContext(Set<Long> likedPostIds,
+                    Set<Long> bookmarkedPostIds,
+                    Map<Long, Map<String, Integer>> reactionsByPostId,
+                    Map<Long, List<String>> userReactionsByPostId,
+                    Map<Long, List<PostMedia>> mediaByPostId) {
+            this.likedPostIds = likedPostIds;
+            this.bookmarkedPostIds = bookmarkedPostIds;
+            this.reactionsByPostId = reactionsByPostId;
+            this.userReactionsByPostId = userReactionsByPostId;
+            this.mediaByPostId = mediaByPostId;
+        }
+    }
+
+    private FeedContext buildFeedContext(List<Long> postIds, User currentUser) {
+        Set<Long> likedPostIds = likeRepository.findLikedPostIdsByUserAndPostIdIn(currentUser, postIds);
+        Set<Long> bookmarkedPostIds = bookmarkRepository.findBookmarkedPostIdsByUserAndPostIdIn(currentUser, postIds);
+
+        Map<Long, Map<String, Integer>> reactionsByPostId = new HashMap<>();
+        for (Object[] row : reactionRepository.countByPostIdsGroupByPostAndEmoji(postIds)) {
+            Long pid = (Long) row[0];
+            String emoji = (String) row[1];
+            int count = ((Long) row[2]).intValue();
+            reactionsByPostId.computeIfAbsent(pid, k -> new LinkedHashMap<>()).put(emoji, count);
+        }
+
+        Map<Long, List<String>> userReactionsByPostId = new HashMap<>();
+        for (Object[] row : reactionRepository.findPostIdAndEmojiByUserAndPostIdIn(currentUser, postIds)) {
+            Long pid = (Long) row[0];
+            String emoji = (String) row[1];
+            userReactionsByPostId.computeIfAbsent(pid, k -> new ArrayList<>()).add(emoji);
+        }
+
+        Map<Long, List<PostMedia>> mediaByPostId = mediaRepository
+                .findByPostIdInOrderByPostIdAscDisplayOrderAsc(postIds)
+                .stream()
+                .collect(Collectors.groupingBy(m -> m.getPost().getId()));
+
+        return new FeedContext(likedPostIds, bookmarkedPostIds, reactionsByPostId, userReactionsByPostId, mediaByPostId);
+    }
+
+    private CommunityPostDTO toDTOWithContext(CommunityPost post, User currentUser, FeedContext ctx) {
+        Long pid = post.getId();
+
+        Map<String, Integer> reactionsMap = ctx.reactionsByPostId.getOrDefault(pid, Collections.emptyMap());
+        List<String> userReactions = ctx.userReactionsByPostId.getOrDefault(pid, Collections.emptyList());
+
+        List<PostMedia> rawMedia = ctx.mediaByPostId.getOrDefault(pid, Collections.emptyList());
+        List<CommunityPostDTO.MediaItem> mediaList = rawMedia.stream()
+                .map(m -> CommunityPostDTO.MediaItem.builder()
+                        .id(m.getId())
+                        .url(m.getUrl())
+                        .mediaType(m.getMediaType().name())
+                        .displayOrder(m.getDisplayOrder())
+                        .build())
+                .collect(Collectors.toList());
+
+        CommunityPostDTO.CommunityPostDTOBuilder builder = CommunityPostDTO.builder()
+                .id(pid)
+                .content(post.getContent())
+                .imageUrl(post.getImageUrl())
+                .videoUrl(post.getVideoUrl())
+                .isAnonymous(post.getIsAnonymous())
+                .isPinned(post.getIsPinned())
+                .isEdited(post.getIsEdited())
+                .likesCount(post.getLikesCount())
+                .commentsCount(post.getCommentsCount())
+                .hashtags(post.getHashtags())
+                .category(post.getCategory())
+                .createdAt(post.getCreatedAt())
+                .updatedAt(post.getUpdatedAt())
+                .likedByCurrentUser(ctx.likedPostIds.contains(pid))
+                .bookmarkedByCurrentUser(ctx.bookmarkedPostIds.contains(pid))
                 .reactions(reactionsMap)
                 .currentUserReactions(userReactions)
                 .media(mediaList);

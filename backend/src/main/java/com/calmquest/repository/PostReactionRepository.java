@@ -25,4 +25,11 @@ public interface PostReactionRepository extends JpaRepository<PostReaction, Long
     List<String> findEmojisByUserAndPost(@Param("user") User user, @Param("post") CommunityPost post);
 
     void deleteByUserAndPostAndEmoji(User user, CommunityPost post, String emoji);
+
+    // Batch queries for feed — eliminates N+1 in toDTO()
+    @Query("SELECT r.post.id, r.emoji, COUNT(r) FROM PostReaction r WHERE r.post.id IN :postIds GROUP BY r.post.id, r.emoji")
+    List<Object[]> countByPostIdsGroupByPostAndEmoji(@Param("postIds") List<Long> postIds);
+
+    @Query("SELECT r.post.id, r.emoji FROM PostReaction r WHERE r.user = :user AND r.post.id IN :postIds")
+    List<Object[]> findPostIdAndEmojiByUserAndPostIdIn(@Param("user") User user, @Param("postIds") List<Long> postIds);
 }
