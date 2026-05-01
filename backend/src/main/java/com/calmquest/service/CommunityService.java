@@ -65,7 +65,9 @@ public class CommunityService {
                 .collect(Collectors.toList());
 
         if (postIds.isEmpty()) {
-            return posts.map(post -> toDTO(post, currentUser));
+            return posts.map(post -> toDTOWithContext(post, currentUser,
+                    new FeedContext(Collections.emptySet(), Collections.emptySet(),
+                            Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap())));
         }
 
         FeedContext ctx = buildFeedContext(postIds, currentUser);
@@ -530,7 +532,7 @@ public class CommunityService {
 
     // ─── Batch fetch context (eliminates N+1 in feed) ───────
 
-    private static class FeedContext {
+    static class FeedContext {
         final Set<Long> likedPostIds;
         final Set<Long> bookmarkedPostIds;
         final Map<Long, Map<String, Integer>> reactionsByPostId;
@@ -558,7 +560,7 @@ public class CommunityService {
         for (Object[] row : reactionRepository.countByPostIdsGroupByPostAndEmoji(postIds)) {
             Long pid = (Long) row[0];
             String emoji = (String) row[1];
-            int count = ((Long) row[2]).intValue();
+            int count = ((Number) row[2]).intValue();
             reactionsByPostId.computeIfAbsent(pid, k -> new LinkedHashMap<>()).put(emoji, count);
         }
 
